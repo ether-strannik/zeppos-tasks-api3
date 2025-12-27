@@ -337,6 +337,103 @@ _getPropertyValue(vtodo, propName) {
 }
 ```
 
+### 11. push() and replace() don't pass params correctly
+**CRITICAL**: In API 3.0, both `push()` and `replace()` fail to pass the `param` argument to the target page's `onInit()`. The params arrive as `undefined`.
+
+**Workaround**: Store params in config before navigation, read from config as fallback in target page:
+```javascript
+// Before navigation (source page)
+const paramObj = { list_id: this.listId, task_id: this.taskId };
+config.set("_editTaskParams", paramObj);
+push({
+  url: "page/amazfit/TaskEditScreen",
+  param: JSON.stringify(paramObj)  // This won't arrive
+});
+
+// In target page constructor (onInit)
+try {
+  param = param ? JSON.parse(param) : {};
+} catch(e) {
+  param = {};
+}
+
+// Fallback: read from config if push() didn't pass params
+if (!param.list_id || !param.task_id) {
+  const savedParams = config.get("_editTaskParams");
+  if (savedParams) {
+    param = savedParams;
+    config.set("_editTaskParams", null); // Clear after use
+  }
+}
+```
+
+This affects:
+- `push()` - navigating to new pages
+- `replace()` - reloading current page with new params
+
+### 12. Fixed overlays require VIEW_CONTAINER
+GROUP widgets don't support `z_index` or fixed positioning. To create overlays (keyboards, pickers, dialogs) that stay fixed above scrollable content:
+
+```javascript
+// BAD - GROUP scrolls with page content
+const overlay = hmUI.createWidget(hmUI.widget.GROUP, {
+  x: 0, y: 0, w: width, h: height
+});
+
+// GOOD - VIEW_CONTAINER with scroll_enable: false stays fixed
+const overlay = hmUI.createWidget(hmUI.widget.VIEW_CONTAINER, {
+  x: 0,
+  y: 0,
+  w: width,
+  h: height,
+  scroll_enable: false,  // Prevents scrolling
+  z_index: 10           // Layers above content (higher = on top)
+});
+
+// Create child widgets inside the container
+const bg = overlay.createWidget(hmUI.widget.FILL_RECT, { ... });
+```
+
+Key properties:
+- `scroll_enable: false` - Keeps container fixed, won't scroll with page
+- `z_index` - Controls layering (0 = bottom, higher = on top)
+
+### 13. getLanguage() return type
+`getLanguage()` from `@zos/settings` may not return a string. Always check type before calling string methods:
+
+```javascript
+import { getLanguage } from "@zos/settings";
+
+// BAD - will crash if not a string
+const lang = getLanguage();
+const userLang = lang.substring(0, 2);
+
+// GOOD - check type first
+let userLang = "en";
+try {
+  const lang = getLanguage();
+  if (typeof lang === 'string') {
+    userLang = lang.substring(0, 2);
+  }
+} catch(e) {
+  // Fallback to "en"
+}
+```
+
+### 14. hmApp.setLayerY() removed
+`hmApp.setLayerY()` is not available in API 3.0. Use `scrollTo()` from `@zos/page`:
+
+```javascript
+// API 1.0
+hmApp.setLayerY(0);  // Scroll to top
+
+// API 3.0
+import { scrollTo } from "@zos/page";
+scrollTo({ y: 0 });  // Scroll to top
+```
+
+However, `scrollTo()` won't prevent widgets from scrolling - for fixed overlays use VIEW_CONTAINER (see pitfall #12).
+
 ---
 
 ## Module Reference

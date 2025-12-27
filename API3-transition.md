@@ -541,6 +541,42 @@ geolocation.onChange(() => {
 - Use methods `getLatitude()` and `getLongitude()` (not properties)
 - Requires permission: `"device:os.geolocation"` in app.json
 
+### 17. Page must set status bar visibility
+**CRITICAL**: In API 3.0, pages won't render unless the status bar is explicitly configured in `onInit()`.
+
+**Symptom:** Page appears blank/black when navigated to, no widgets visible.
+
+**API 1.0:**
+```javascript
+// Status bar was configured globally or had defaults
+Page({
+  onInit() {
+    new MyScreen().start();
+  }
+})
+```
+
+**API 3.0:**
+```javascript
+import { setStatusBarVisible, updateStatusBarTitle } from "@zos/ui";
+
+Page({
+  onInit() {
+    // REQUIRED: Must set status bar visibility
+    setStatusBarVisible(true);
+    updateStatusBarTitle(""); // or updateStatusBarTitle("Page Title")
+
+    new MyScreen().start();
+  }
+})
+```
+
+**Without these calls:** The page will navigate successfully but appear completely blank/black. No widgets will be visible even though the code runs without errors.
+
+**Always include in every Page():**
+- `setStatusBarVisible(true)` or `setStatusBarVisible(false)`
+- `updateStatusBarTitle("")` to set the title (can be empty string)
+
 ---
 
 ## Module Reference

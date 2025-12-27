@@ -577,6 +577,35 @@ Page({
 - `setStatusBarVisible(true)` or `setStatusBarVisible(false)`
 - `updateStatusBarTitle("")` to set the title (can be empty string)
 
+### 18. Pages must be registered in app.json
+**CRITICAL**: Pages must be explicitly listed in the `app.json` pages array to be navigable.
+
+**Symptom:** `push()` call does nothing, page doesn't navigate, no error shown.
+
+**app.json:**
+```json
+{
+  "targets": {
+    "common": {
+      "module": {
+        "page": {
+          "pages": [
+            "page/amazfit/HomeScreen",
+            "page/amazfit/TaskEditScreen",
+            "page/amazfit/SettingsScreen",
+            "page/amazfit/ScreenBoardSetup"
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+**Without registration:** If you call `push({ url: "page/amazfit/ScreenBoardSetup" })` but the page isn't in the `pages` array, the navigation will silently fail - nothing happens, no error is thrown.
+
+**Note:** This was also required in API 1.0, but the symptom is the same in API 3.0 - always verify new pages are registered.
+
 ---
 
 ## Module Reference

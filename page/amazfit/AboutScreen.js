@@ -1,4 +1,4 @@
-import { setStatusBarVisible } from "@zos/ui";
+import { setStatusBarVisible, updateStatusBarTitle } from "@zos/ui";
 import { BaseAboutScreen } from "../../lib/mmk/BaseAboutScreen";
 import { ListScreen } from "../../lib/mmk/ListScreen";
 import {VERSION} from "../../version";
@@ -51,6 +51,7 @@ class DebugLogScreen extends ListScreen {
 Page({
   onInit(params) {
     setStatusBarVisible(false);
+    updateStatusBarTitle("");
 
     const parsed = JSON.parse(params || "{}");
     if (parsed.debugLog !== undefined) {

@@ -5,13 +5,17 @@ import {log} from "@zos/utils";
 import * as alarmMgr from "@zos/alarm";
 import {Time} from "@zos/sensor";
 import {MessageBuilder} from "../lib/zeppos/message";
+import {ConfigStorage} from "../lib/mmk/ConfigStorage";
+import {FsTools} from "../lib/mmk/Path";
 
 const logger = log.getLogger("test");
 const {width: DEVICE_WIDTH, height: DEVICE_HEIGHT} = getDeviceInfo();
 
 const globalData = getApp()._options.globalData;
-const appId = 1056908;
+const appId = 1023438;
+FsTools.appTags = [appId, "app"];
 const messageBuilder = new MessageBuilder({ appId });
+const config = new ConfigStorage();
 
 Page({
   build() {
@@ -29,11 +33,12 @@ Page({
       align_h: hmUI.align.CENTER_H
     });
 
-    // Test localStorage
+    // Test ConfigStorage
     let storageTest = "not tested";
     try {
-      globalData.localStorage.setItem("test_key", "hello");
-      const val = globalData.localStorage.getItem("test_key");
+      config.load();
+      config.set("test_key", "hello");
+      const val = config.get("test_key");
       storageTest = val === "hello" ? "OK" : "FAIL";
     } catch(e) {
       storageTest = "Error: " + e.message;

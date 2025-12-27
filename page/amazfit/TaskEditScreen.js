@@ -546,6 +546,7 @@ class TaskEditScreen extends ListScreen {
 
   hideReminderDateTimePicker() {
     if (this.reminderDateTimePicker) {
+      this.reminderDateTimePicker.destroy();
       this.reminderDateTimePicker = null;
       setScrollMode({ mode: 1 });
     }
@@ -713,6 +714,7 @@ class TaskEditScreen extends ListScreen {
       return true;
     }
     if (this.dateTimePicker) {
+      this.dateTimePicker.destroy();
       this.dateTimePicker = null;
       setScrollMode({ mode: 1 });
       return true;

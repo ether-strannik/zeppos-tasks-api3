@@ -1,22 +1,23 @@
 {
   "configVersion": "v3",
   "app": {
-    "appId": 1056908,
-    "appName": "My Timers",
+    "appId": 1023438,
+    "appName": "Tasks NC",
     "appType": "app",
     "version": {
-      "code": 4,
-      "name": "4.0"
+      "code": 100,
+      "name": "1.0"
     },
-    "icon": "iconApp.png",
-    "vender": "Albert Safiullin albertincx@gmail.com",
-    "description": "An app creates timers with alarm"
+    "icon": "icon.png",
+    "vender": "ether-strannik",
+    "description": "Nextcloud Tasks for ZeppOS"
   },
   "permissions": [
     "device:os.notification",
     "data:os.device.info",
     "device:os.alarm",
-    "device:os.local_storage"
+    "device:os.local_storage",
+    "device:os.geolocation"
   ],
   "runtime": {
     "apiVersion": {

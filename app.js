@@ -5,6 +5,7 @@ import {ConfigStorage} from "./lib/mmk/ConfigStorage";
 import {prepareFetch} from './lib/mmk/FetchForward';
 import {t} from "./lib/mmk/i18n";
 import {FsTools} from "./lib/mmk/Path";
+import {TasksProvider} from "./src/TasksProvider";
 
 const logger = log.getLogger("app");
 
@@ -13,14 +14,15 @@ FsTools.appTags = [appId, "app"];
 
 const messageBuilder = new MessageBuilder({ appId });
 const config = new ConfigStorage();
+const tasksProvider = new TasksProvider(config, messageBuilder);
 
 App({
   globalData: {
     appTags: [appId, "app"],
     messageBuilder,
     config,
+    tasksProvider,
     localStorage: null,
-    // tasksProvider will be added after src/ migration
     t,
   },
 

@@ -349,7 +349,7 @@ _getPropertyValue(vtodo, propName) {
 | `hmSetting` | `@zos/settings` |
 | `hmBle` | `@zos/ble` |
 | `timer` | `@zos/timer` |
-| `hmSensor` | `@zos/sensor` |
+| `hmSensor` | `@zos/sensor` (or use JS `Date` for time) |
 | - | `@zos/device` |
 | - | `@zos/display` |
 | - | `@zos/page` |

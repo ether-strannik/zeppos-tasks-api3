@@ -213,13 +213,13 @@ export class CalDAVTask {
   }
 
   getCurrentTimeString() {
-    const time = hmSensor.createSensor(hmSensor.id.TIME);
-    return time.year.toString() +
-      time.month.toString().padStart(2, "0") +
-      time.day.toString().padStart(2, "0") +
-      "T" + time.hour.toString().padStart(2, "0") +
-      time.minute.toString().padStart(2, "0") +
-      time.second.toString().padStart(2, "0");
+    const now = new Date();
+    return now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, "0") +
+      now.getDate().toString().padStart(2, "0") +
+      "T" + now.getHours().toString().padStart(2, "0") +
+      now.getMinutes().toString().padStart(2, "0") +
+      now.getSeconds().toString().padStart(2, "0");
   }
 
   setCompleted(completed) {

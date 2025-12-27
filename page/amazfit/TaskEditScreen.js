@@ -965,7 +965,7 @@ class TaskEditScreen extends ListScreen {
       flushLog();
       this.isSaving = false;
       this.locationRow.setText(this.task.geo ? t("Update location") : t("Add current location"));
-      hmUI.showToast({ text: t("GPS error: ") + (e.message || e));
+      hmUI.showToast({ text: t("GPS error: ") + (e.message || e) });
     }
   }
 

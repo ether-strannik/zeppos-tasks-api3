@@ -18,9 +18,15 @@ class TaskEditScreen extends ListScreen {
     this.isSaving = false;
     this.deleteConfirm = 1; // Requires 2 taps to delete
 
-    param = JSON.parse(param);
+    try {
+      param = param ? JSON.parse(param) : {};
+    } catch(e) {
+      console.log("TaskEditScreen param parse error:", e);
+      param = {};
+    }
     this.listId = param.list_id;
     this.taskId = param.task_id;
+    console.log("TaskEditScreen: listId=", this.listId, "taskId=", this.taskId);
     this.task = tasksProvider.getTaskList(this.listId).getTask(this.taskId);
   }
 
@@ -28,11 +34,21 @@ class TaskEditScreen extends ListScreen {
     const hideSpinner = createSpinner();
     this.task.sync().then(() => {
       hideSpinner();
-      this.build();
+      try {
+        this.build();
+      } catch(e) {
+        console.log("TaskEditScreen build error:", e);
+        hmUI.showToast({ text: "Build error: " + (e.message || e) });
+      }
     }).catch((e) => {
       console.log("Sync error:", e);
       hideSpinner();
-      this.build();
+      try {
+        this.build();
+      } catch(e2) {
+        console.log("TaskEditScreen build error:", e2);
+        hmUI.showToast({ text: "Build error: " + (e2.message || e2) });
+      }
     });
   }
 
@@ -1030,7 +1046,8 @@ Page({
 
       this.screen.init();
     } catch(e) {
-      console.log(e);
+      console.log("TaskEditScreen error:", e);
+      hmUI.showToast({ text: "Error: " + (e.message || e) });
     }
   },
 

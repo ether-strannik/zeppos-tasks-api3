@@ -398,6 +398,39 @@ Key properties:
 - `scroll_enable: false` - Keeps container fixed, won't scroll with page
 - `z_index` - Controls layering (0 = bottom, higher = on top)
 
+**For composite pickers** (like DateTimePicker with CalendarPicker + TimePicker):
+```javascript
+// Parent creates container
+this.container = hmUI.createWidget(hmUI.widget.VIEW_CONTAINER, {
+  x: 0, y: 0, w: width, h: height,
+  scroll_enable: false,
+  z_index: 10
+});
+
+// Pass container to child components
+this.calendarPicker = new CalendarPicker({
+  container: this.container,  // Child creates widgets in parent's container
+  ...
+});
+
+// Child uses container: (this.container || hmUI).createWidget(...)
+const btn = (this.container || hmUI).createWidget(hmUI.widget.BUTTON, { ... });
+```
+
+**Gesture handling:** Must call `destroy()` to properly clean up:
+```javascript
+// BAD - widgets stay visible
+if (this.dateTimePicker) {
+  this.dateTimePicker = null;  // Container still exists!
+}
+
+// GOOD - properly clean up
+if (this.dateTimePicker) {
+  this.dateTimePicker.destroy();  // Removes container and all widgets
+  this.dateTimePicker = null;
+}
+```
+
 ### 13. getLanguage() return type
 `getLanguage()` from `@zos/settings` may not return a string. Always check type before calling string methods:
 

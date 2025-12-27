@@ -19,7 +19,8 @@ class TaskEditScreen extends ListScreen {
     this.deleteConfirm = 1; // Requires 2 taps to delete
 
     try {
-      param = param ? JSON.parse(param) : {};
+      // Handle undefined, null, empty string, or literal "undefined" string
+      param = (param && param !== "undefined") ? JSON.parse(param) : {};
     } catch(e) {
       console.log("TaskEditScreen param parse error:", e);
       param = {};
@@ -27,10 +28,21 @@ class TaskEditScreen extends ListScreen {
     this.listId = param.list_id;
     this.taskId = param.task_id;
     console.log("TaskEditScreen: listId=", this.listId, "taskId=", this.taskId);
-    this.task = tasksProvider.getTaskList(this.listId).getTask(this.taskId);
+
+    if (!this.listId || !this.taskId) {
+      console.log("TaskEditScreen: Missing listId or taskId");
+      this.task = null;
+    } else {
+      this.task = tasksProvider.getTaskList(this.listId).getTask(this.taskId);
+    }
   }
 
   init() {
+    if (!this.task) {
+      hmUI.showToast({ text: "Error: Task not found" });
+      return;
+    }
+
     const hideSpinner = createSpinner();
     this.task.sync().then(() => {
       hideSpinner();

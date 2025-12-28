@@ -21,9 +21,9 @@
   ],
   "runtime": {
     "apiVersion": {
-      "compatible": "3.0",
-      "target": "3.0",
-      "minVersion": "3.0"
+      "compatible": "4.0",
+      "target": "4.2",
+      "minVersion": "4.0"
     }
   },
   "targets": {

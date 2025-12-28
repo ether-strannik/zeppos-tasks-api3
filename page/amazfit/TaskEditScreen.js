@@ -1,10 +1,9 @@
-import hmUI, { setStatusBarVisible, updateStatusBarTitle } from "@zos/ui";
+import hmUI, { setStatusBarVisible, updateStatusBarTitle, createKeyboard, deleteKeyboard, inputType } from "@zos/ui";
 import { replace, push, back } from "@zos/router";
 import { setWakeUpRelaunch, setPageBrightTime } from "@zos/display";
 import { setScrollMode } from "@zos/page";
 import { Geolocation } from "@zos/sensor";
 import {ListScreen} from "../../lib/mmk/ListScreen";
-import {ScreenBoard} from "../../lib/mmk/ScreenBoard";
 import {DateTimePicker} from "../../lib/mmk/DateTimePicker";
 import {TimePicker} from "../../lib/mmk/TimePicker";
 import {PriorityPicker} from "../../lib/mmk/PriorityPicker";
@@ -284,31 +283,8 @@ class TaskEditScreen extends ListScreen {
     });
     this.offset();
 
-    // Setup keyboard for title editing
-    this.titleBoard = new ScreenBoard();
-    this.titleBoard.title = t("Edit title");
-    this.titleBoard.value = this.task.title;
-    this.titleBoard.confirmButtonText = t("Save");
-    this.titleBoard.onConfirm = (v) => this.doOverrideTitle(v);
-    this.titleBoard.visible = false;
-
-    // Setup keyboard for notes editing
-    this.notesBoard = new ScreenBoard();
-    this.notesBoard.title = t("Edit notes");
-    this.notesBoard.value = this.task.description || "";
-    this.notesBoard.confirmButtonText = t("Save");
-    this.notesBoard.onConfirm = (v) => this.doOverrideNotes(v);
-    this.notesBoard.visible = false;
-
-    // Setup keyboard for subtask creation (CalDAV only)
-    if (this.task.uid) {
-      this.subtaskBoard = new ScreenBoard();
-      this.subtaskBoard.title = t("New subtask");
-      this.subtaskBoard.value = "";
-      this.subtaskBoard.confirmButtonText = t("Create");
-      this.subtaskBoard.onConfirm = (v) => this.doCreateSubtask(v);
-      this.subtaskBoard.visible = false;
-    }
+    // Keyboards will be created on demand
+    this.currentKeyboard = null;
 
     // Priority picker will be created on demand
     this.priorityPicker = null;
@@ -644,21 +620,75 @@ class TaskEditScreen extends ListScreen {
   }
 
   showTitleEditor() {
-    this.titleBoard.visible = true;
-    // hmApp.setLayerY(0) - not needed in API 3.0;
-    setScrollMode({ mode: 0 });
+    this.currentKeyboard = createKeyboard({
+      inputType: inputType.CHAR,
+      text: this.task.title || "",
+      onComplete: (keyboardWidget, result) => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard:", e);
+        }
+        this.currentKeyboard = null;
+        this.doOverrideTitle(result.data);
+      },
+      onCancel: () => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard on cancel:", e);
+        }
+        this.currentKeyboard = null;
+      }
+    });
   }
 
   showNotesEditor() {
-    this.notesBoard.visible = true;
-    // hmApp.setLayerY(0) - not needed in API 3.0;
-    setScrollMode({ mode: 0 });
+    this.currentKeyboard = createKeyboard({
+      inputType: inputType.CHAR,
+      text: this.task.description || "",
+      onComplete: (keyboardWidget, result) => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard:", e);
+        }
+        this.currentKeyboard = null;
+        this.doOverrideNotes(result.data);
+      },
+      onCancel: () => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard on cancel:", e);
+        }
+        this.currentKeyboard = null;
+      }
+    });
   }
 
   showSubtaskEditor() {
-    this.subtaskBoard.visible = true;
-    // hmApp.setLayerY(0) - not needed in API 3.0;
-    setScrollMode({ mode: 0 });
+    this.currentKeyboard = createKeyboard({
+      inputType: inputType.CHAR,
+      text: "",
+      onComplete: (keyboardWidget, result) => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard:", e);
+        }
+        this.currentKeyboard = null;
+        this.doCreateSubtask(result.data);
+      },
+      onCancel: () => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard on cancel:", e);
+        }
+        this.currentKeyboard = null;
+      }
+    });
   }
 
   showPriorityEditor() {
@@ -775,18 +805,16 @@ class TaskEditScreen extends ListScreen {
     if(this.isSaving) return;
 
     this.isSaving = true;
-    this.titleBoard.confirmButtonText = t("Saving, wait…");
+    createSpinner();
     this.task.setTitle(value).then((resp) => {
+      this.isSaving = false;
       if (resp && resp.error) {
-        this.isSaving = false;
-        this.titleBoard.confirmButtonText = t("Save");
         hmUI.showToast({ text: resp.error });
         return;
       }
       this.reloadEditScreen();
     }).catch((e) => {
       this.isSaving = false;
-      this.titleBoard.confirmButtonText = t("Save");
       hmUI.showToast({ text: e.message || t("Failed to save") });
     });
   }
@@ -801,18 +829,16 @@ class TaskEditScreen extends ListScreen {
     }
 
     this.isSaving = true;
-    this.notesBoard.confirmButtonText = t("Saving, wait…");
+    createSpinner();
     this.task.setDescription(value).then((resp) => {
+      this.isSaving = false;
       if (resp && resp.error) {
-        this.isSaving = false;
-        this.notesBoard.confirmButtonText = t("Save");
         hmUI.showToast({ text: resp.error });
         return;
       }
       this.reloadEditScreen();
     }).catch((e) => {
       this.isSaving = false;
-      this.notesBoard.confirmButtonText = t("Save");
       hmUI.showToast({ text: e.message || t("Failed to save") });
     });
   }
@@ -825,20 +851,18 @@ class TaskEditScreen extends ListScreen {
     }
 
     this.isSaving = true;
-    this.subtaskBoard.confirmButtonText = t("Creating…");
+    createSpinner();
 
     // Insert subtask with parent UID
     this.task.list.insertSubtask(title.trim(), this.task.uid).then((resp) => {
+      this.isSaving = false;
       if (resp && resp.error) {
-        this.isSaving = false;
-        this.subtaskBoard.confirmButtonText = t("Create");
         hmUI.showToast({ text: resp.error });
         return;
       }
       this.reloadEditScreen();
     }).catch((e) => {
       this.isSaving = false;
-      this.subtaskBoard.confirmButtonText = t("Create");
       hmUI.showToast({ text: e.message || t("Failed to create") });
     });
   }

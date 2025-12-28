@@ -1,6 +1,5 @@
-import { setStatusBarVisible } from "@zos/ui";
+import { setStatusBarVisible, createKeyboard, deleteKeyboard, inputType } from "@zos/ui";
 import { back } from "@zos/router";
-import {ScreenBoard} from "../../lib/mmk/ScreenBoard";
 import {createSpinner} from "../Utils";
 import {ConfiguredListScreen} from "../ConfiguredListScreen";
 
@@ -16,25 +15,59 @@ class NewNoteScreen extends ConfiguredListScreen {
     } catch(e) {
       this.params = {};
     }
-    this.board = new ScreenBoard();
-    this.board.title = t("New note:");
-    this.board.confirmButtonText = t("Create");
-    this.board.onConfirm = (v) => this.doCreateTask(v);
+    this.keyboard = null;
   }
 
   build() {
-    this.board.visible = true;
+    // Create system keyboard with CHAR input type (T9 with voice support)
+    this.keyboard = createKeyboard({
+      inputType: inputType.CHAR,
+      text: "",  // Initial text
+      onComplete: (keyboardWidget, result) => {
+        console.log("Keyboard completed:", result.data);
+        // Delete keyboard first to prevent loop
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard:", e);
+        }
+        this.doCreateTask(result.data);
+      },
+      onCancel: () => {
+        console.log("Keyboard cancelled");
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard on cancel:", e);
+        }
+        back();
+      }
+    });
   }
 
   doCreateTask(text) {
-    this.board.visible = false;
-
-    createSpinner();
-    console.log(JSON.stringify(tasksProvider));
-    const list = tasksProvider.getTaskList(this.params.list);
-    list.insertTask(text).then(() => {
+    if (!text || text.trim() === "") {
+      console.log("Empty text, going back");
       back();
-    })
+      return;
+    }
+
+    console.log("Creating task with text:", text);
+    createSpinner();
+
+    try {
+      const list = tasksProvider.getTaskList(this.params.list);
+      list.insertTask(text).then(() => {
+        console.log("Task created successfully");
+        back();
+      }).catch((error) => {
+        console.log("Error creating task:", error);
+        back();
+      });
+    } catch (error) {
+      console.log("Error in doCreateTask:", error);
+      back();
+    }
   }
 }
 

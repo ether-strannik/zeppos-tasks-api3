@@ -69,7 +69,21 @@ class LocalListWrapper {
     }
 
     getTask(id) {
-        const taskData = this._tasks.find(t => t.id === id);
+        // Recursively search for task (handles both top-level tasks and subtasks)
+        const findTask = (taskList) => {
+            for (let task of taskList) {
+                if (task.id === id || task.uid === id) {
+                    return task;
+                }
+                if (task.subtasks && task.subtasks.length > 0) {
+                    const found = findTask(task.subtasks);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        const taskData = findTask(this._tasks);
         if (taskData) {
             return new LocalTask(taskData, this, this.config);
         }

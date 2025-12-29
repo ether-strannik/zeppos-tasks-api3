@@ -1,8 +1,6 @@
-import hmUI, { setStatusBarVisible, updateStatusBarTitle } from "@zos/ui";
+import hmUI, { setStatusBarVisible, updateStatusBarTitle, createKeyboard, deleteKeyboard, inputType } from "@zos/ui";
 import { replace, back } from "@zos/router";
-import { setScrollMode } from "@zos/page";
 import {ConfiguredListScreen} from "../ConfiguredListScreen";
-import {ScreenBoard} from "../../lib/mmk/ScreenBoard";
 import {createSpinner} from "../Utils";
 
 const { t, config, tasksProvider } = getApp()._options.globalData
@@ -103,14 +101,6 @@ class CategoryPickerScreen extends ConfiguredListScreen {
     });
 
     this.offset();
-
-    // Setup ScreenBoard for adding new category
-    this.addCategoryBoard = new ScreenBoard();
-    this.addCategoryBoard.title = t("New category");
-    this.addCategoryBoard.value = "";
-    this.addCategoryBoard.confirmButtonText = t("Add");
-    this.addCategoryBoard.onConfirm = (v) => this.doAddCategory(v);
-    this.addCategoryBoard.visible = false;
   }
 
   toggleCategory(category) {
@@ -134,9 +124,29 @@ class CategoryPickerScreen extends ConfiguredListScreen {
   }
 
   showAddCategoryEditor() {
-    this.addCategoryBoard.visible = true;
-    // hmApp.setLayerY(0);
-    setScrollMode({ mode: 0 });
+    // Create system keyboard with CHAR input type (T9 with voice support)
+    createKeyboard({
+      inputType: inputType.CHAR,
+      text: "",
+      onComplete: (keyboardWidget, result) => {
+        // Delete keyboard first
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard:", e);
+        }
+
+        // Add the category
+        this.doAddCategory(result.data);
+      },
+      onCancel: () => {
+        try {
+          deleteKeyboard();
+        } catch (e) {
+          console.log("Error deleting keyboard on cancel:", e);
+        }
+      }
+    });
   }
 
   deleteSelected() {

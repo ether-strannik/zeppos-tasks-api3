@@ -720,6 +720,44 @@ class HomeScreen extends ConfiguredListScreen {
       });
     }
 
+    // Add category tag badge if enabled and subtask has categories
+    if (config.get("showCategories", false) && subtask.categories && subtask.categories.length > 0) {
+      const tagText = "#" + subtask.categories[0];
+      const tagPadding = 10;
+      const tagFontSize = 22;
+      const tagCharWidth = 11;  // Approximate character width
+      const tagWidth = tagText.length * tagCharWidth + tagPadding * 2;
+      const tagHeight = 28;
+      const rowHeight = row.config.height;
+      // Position to the left of notes icon (if present) or right side
+      const hasNotes = subtask.description && subtask.description.trim().length > 0;
+      const tagX = WIDGET_WIDTH - tagWidth - (hasNotes ? ICON_SIZE_SMALL + 16 : 8);
+      const tagY = Math.floor((rowHeight - tagHeight) / 2);
+
+      // Background rounded rectangle
+      row.group.createWidget(hmUI.widget.FILL_RECT, {
+        x: tagX,
+        y: tagY,
+        w: tagWidth,
+        h: tagHeight,
+        radius: 4,
+        color: 0x444444  // Dark gray background
+      });
+
+      // Tag text
+      row.group.createWidget(hmUI.widget.TEXT, {
+        x: tagX,
+        y: tagY,
+        w: tagWidth,
+        h: tagHeight,
+        text: tagText,
+        text_size: tagFontSize,
+        color: 0xCCCCCC,
+        align_h: hmUI.align.CENTER_H,
+        align_v: hmUI.align.CENTER_V
+      });
+    }
+
     // Add notes indicator icon on right side if subtask has description
     if (subtask.description && subtask.description.trim().length > 0) {
       const iconSize = ICON_SIZE_SMALL;

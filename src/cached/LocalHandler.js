@@ -104,7 +104,8 @@ class LocalListWrapper {
             checklistItems: [],
             subtasks: [],
             priority: 0,
-            status: "NEEDS-ACTION"
+            status: "NEEDS-ACTION",
+            categories: []
         };
 
         // Update local lists
@@ -141,7 +142,8 @@ class LocalListWrapper {
             checklistItems: [],
             subtasks: [],
             priority: 0,
-            status: "NEEDS-ACTION"
+            status: "NEEDS-ACTION",
+            categories: []
         };
 
         // Find parent and add subtask recursively
@@ -191,6 +193,7 @@ class LocalTask {
         this.dueDate = data.dueDate ? new Date(data.dueDate) : null;
         this.location = data.location || "";
         this.geo = data.geo || null;
+        this.categories = data.categories || [];
         this.subtasks = (data.subtasks || []).map(s => new LocalTask(s, list, config));
         this.list = list;
         this.config = config;
@@ -305,6 +308,17 @@ class LocalTask {
 
         this._updateTask({ priority: value });
         this.priority = value;
+        return Promise.resolve();
+    }
+
+    setCategories(categories) {
+        // Ensure categories is an array
+        if (!Array.isArray(categories)) {
+            categories = [];
+        }
+
+        this._updateTask({ categories: categories });
+        this.categories = categories;
         return Promise.resolve();
     }
 

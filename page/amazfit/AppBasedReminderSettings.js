@@ -1,7 +1,7 @@
 import hmUI, { setStatusBarVisible, updateStatusBarTitle } from "@zos/ui";
 import { push, back } from "@zos/router";
 import { ListScreen } from "../../lib/mmk/ListScreen";
-import { createTaskAlarms, cancelTaskAlarms, getAppReminderSettings, setAppReminderSettings } from "../../utils/app-reminder-manager";
+import { createTaskAlarms, cancelTaskAlarms, getAppReminderSettings, setAppReminderSettings, getNextScheduledAlarmTime } from "../../utils/app-reminder-manager";
 import { hasValidVALARM } from "../../utils/valarm-parser";
 
 const { config, t, tasksProvider } = getApp()._options.globalData;
@@ -117,12 +117,25 @@ class AppBasedReminderSettings extends ListScreen {
             return;
         }
 
-        // Enable toggle
-        this.rows.enable = this.row({
-            text: t("Enable for this task"),
-            icon: `icon_s/cb_${this.settings.enabled}.png`,
-            callback: () => this.toggleEnable()
-        });
+        // Show current scheduled time if any
+        const nextAlarmTime = getNextScheduledAlarmTime(this.task.uid);
+        if (nextAlarmTime) {
+            const month = nextAlarmTime.toLocaleString('en-US', { month: 'short' });
+            const day = nextAlarmTime.getDate();
+            const hours = nextAlarmTime.getHours().toString().padStart(2, '0');
+            const minutes = nextAlarmTime.getMinutes().toString().padStart(2, '0');
+            this.text({
+                text: t("Scheduled: ") + `${month} ${day}, ${hours}:${minutes}`,
+                color: 0x00FF00
+            });
+            this.offset(8);
+            // Cancel alarms option
+            this.row({
+                text: t("Cancel scheduled alarm"),
+                icon: "icon_s/delete.png",
+                callback: () => this.cancelAlarms()
+            });
+        }
 
         // Vibration section
         this.offset(16);
@@ -170,10 +183,10 @@ class AppBasedReminderSettings extends ListScreen {
             callback: () => this.cycleSnoozeDuration()
         });
 
-        // Save button
+        // Schedule button
         this.offset(32);
         this.row({
-            text: t("Save"),
+            text: t("Schedule reminder"),
             icon: "icon_s/save.png",
             callback: () => this.save()
         });
@@ -181,10 +194,14 @@ class AppBasedReminderSettings extends ListScreen {
         this.offset();
     }
 
-    toggleEnable() {
-        this.settings.enabled = !this.settings.enabled;
-        this.rows.enable.iconView.setProperty(hmUI.prop.SRC, `icon_s/cb_${this.settings.enabled}.png`);
-        console.log("Toggled enable:", this.settings.enabled);
+    cancelAlarms() {
+        console.log("=== CANCEL ALARMS ===");
+        cancelTaskAlarms(this.task.uid);
+        this.settings.alarmIds = [];
+        this.settings.nextTriggerTime = null;
+        setAppReminderSettings(this.task.uid, this.settings);
+        hmUI.showToast({ text: t("Alarm cancelled") });
+        back();
     }
 
     toggleVibration() {
@@ -226,7 +243,7 @@ class AppBasedReminderSettings extends ListScreen {
     }
 
     save() {
-        console.log("=== SAVE APP-BASED REMINDER SETTINGS ===");
+        console.log("=== SCHEDULE APP-BASED REMINDER ===");
         console.log("Settings:", JSON.stringify(this.settings));
 
         // Save snooze duration (global setting)
@@ -235,35 +252,23 @@ class AppBasedReminderSettings extends ListScreen {
             console.log("Saved snooze duration index:", this.snoozeIndex);
         }
 
-        if (this.settings.enabled) {
-            console.log("App-based reminders enabled - creating alarms");
+        // Cancel existing alarms first
+        cancelTaskAlarms(this.task.uid);
 
-            // Cancel existing alarms first
-            cancelTaskAlarms(this.task.uid);
+        // Save settings first (vibration, sound, etc)
+        setAppReminderSettings(this.task.uid, this.settings);
 
-            // Create new alarms with current settings
-            const alarmIds = createTaskAlarms(this.task, this.settings);
+        // Create new alarms - this will add alarmIds and nextTriggerTime to config
+        const alarmIds = createTaskAlarms(this.task, this.settings);
 
-            if (alarmIds.length === 0) {
-                console.log("Failed to create alarms");
-                hmUI.showToast({ text: t("Failed to create alarms") });
-                return;
-            }
-
-            this.settings.alarmIds = alarmIds;
-            console.log(`Created ${alarmIds.length} alarm(s):`, alarmIds);
-            hmUI.showToast({ text: t(`Created ${alarmIds.length} alarm(s)`) });
-        } else {
-            console.log("App-based reminders disabled - cancelling alarms");
-            // Disable: cancel all alarms
-            cancelTaskAlarms(this.task.uid);
-            this.settings.alarmIds = [];
-            hmUI.showToast({ text: t("App-based reminders disabled") });
+        if (alarmIds.length === 0) {
+            console.log("Failed to create alarms");
+            hmUI.showToast({ text: t("Failed to schedule") });
+            return;
         }
 
-        // Save settings to config
-        setAppReminderSettings(this.task.uid, this.settings);
-        console.log("Settings saved to config");
+        console.log(`Created ${alarmIds.length} alarm(s):`, alarmIds);
+        hmUI.showToast({ text: t("Reminder scheduled") });
 
         // Navigate back
         back();

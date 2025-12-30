@@ -145,20 +145,30 @@ export function createTaskAlarms(task, settings) {
         }
     });
 
-    // Save alarm IDs to config
+    // Save alarm IDs and next trigger time to config
     const appReminders = config.get("appReminders", {});
     if (!appReminders[task.uid]) {
         appReminders[task.uid] = {};
     }
 
-    // Preserve existing settings, update alarmIds
+    // Find the earliest trigger time (next alarm)
+    let nextTriggerTime = null;
+    if (triggerTimes.length > 0) {
+        const futureTriggers = triggerTimes.filter(t => t > now);
+        if (futureTriggers.length > 0) {
+            nextTriggerTime = Math.min(...futureTriggers.map(t => t.getTime()));
+        }
+    }
+
+    // Preserve existing settings, update alarmIds and nextTriggerTime
     appReminders[task.uid] = {
         ...appReminders[task.uid],
-        alarmIds: alarmIds
+        alarmIds: alarmIds,
+        nextTriggerTime: nextTriggerTime
     };
 
     config.set("appReminders", appReminders);
-    console.log(`Saved ${alarmIds.length} alarm IDs to config`);
+    console.log(`Saved ${alarmIds.length} alarm IDs to config, nextTriggerTime:`, nextTriggerTime ? new Date(nextTriggerTime).toISOString() : 'none');
     console.log('=== CREATE TASK ALARMS END ===');
 
     return alarmIds;
@@ -195,8 +205,9 @@ export function cancelTaskAlarms(taskUID) {
         }
     });
 
-    // Clear alarm IDs but keep settings
+    // Clear alarm IDs and nextTriggerTime but keep other settings
     taskReminder.alarmIds = [];
+    taskReminder.nextTriggerTime = null;
     appReminders[taskUID] = taskReminder;
     config.set("appReminders", appReminders);
 
@@ -307,6 +318,36 @@ export function removeAppReminderSettings(taskUID) {
 export function isAppReminderEnabled(taskUID) {
     const settings = getAppReminderSettings(taskUID);
     return !!(settings && settings.enabled);
+}
+
+/**
+ * Get next scheduled alarm time for a task
+ *
+ * @param {string} taskUID - Task UID
+ * @returns {Date|null} Next alarm time or null if no alarms scheduled
+ */
+export function getNextScheduledAlarmTime(taskUID) {
+    const settings = getAppReminderSettings(taskUID);
+    if (!settings || !settings.nextTriggerTime) {
+        return null;
+    }
+    // Check if alarm is still in the future
+    const now = Date.now();
+    if (settings.nextTriggerTime <= now) {
+        return null; // Alarm has passed
+    }
+    return new Date(settings.nextTriggerTime);
+}
+
+/**
+ * Check if task has active scheduled alarms
+ *
+ * @param {string} taskUID - Task UID
+ * @returns {boolean} True if has active alarms
+ */
+export function hasScheduledAlarms(taskUID) {
+    const settings = getAppReminderSettings(taskUID);
+    return !!(settings && settings.alarmIds && settings.alarmIds.length > 0 && settings.nextTriggerTime && settings.nextTriggerTime > Date.now());
 }
 
 /**

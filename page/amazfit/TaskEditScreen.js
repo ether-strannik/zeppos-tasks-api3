@@ -9,7 +9,7 @@ import {TimePicker} from "../../lib/mmk/TimePicker";
 import {PriorityPicker} from "../../lib/mmk/PriorityPicker";
 import {AppGesture} from "../../lib/mmk/AppGesture";
 import {createSpinner, log, flushLog, request} from "../Utils";
-import {getAppReminderSettings, isAppReminderEnabled, cancelTaskAlarms} from "../../utils/app-reminder-manager";
+import {getAppReminderSettings, isAppReminderEnabled, cancelTaskAlarms, getNextScheduledAlarmTime} from "../../utils/app-reminder-manager";
 
 const { t, config, tasksProvider } = getApp()._options.globalData
 
@@ -220,10 +220,18 @@ class TaskEditScreen extends ListScreen {
         });
 
         // App-based reminders (only show if alarm is set)
-        const appReminderEnabled = isAppReminderEnabled(this.task.uid);
-        const appReminderText = appReminderEnabled
-          ? t("App-based reminders: Enabled")
-          : t("App-based reminders");
+        const nextAlarmTime = getNextScheduledAlarmTime(this.task.uid);
+        let appReminderText;
+        if (nextAlarmTime) {
+          // Format as "Dec 30, 14:30"
+          const month = nextAlarmTime.toLocaleString('en-US', { month: 'short' });
+          const day = nextAlarmTime.getDate();
+          const hours = nextAlarmTime.getHours().toString().padStart(2, '0');
+          const minutes = nextAlarmTime.getMinutes().toString().padStart(2, '0');
+          appReminderText = t("App reminder: ") + `${month} ${day}, ${hours}:${minutes}`;
+        } else {
+          appReminderText = t("App-based reminders");
+        }
 
         this.row({
           text: appReminderText,

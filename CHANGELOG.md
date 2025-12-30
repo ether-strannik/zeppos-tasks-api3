@@ -4,6 +4,21 @@
 
 ### Added
 
+#### App-Based Reminder System
+- **ZeppOS Alarm API integration**: Task reminders trigger even when app is closed
+- **TaskReminderPopup**: Full-screen alarm popup with task title, description, due date
+- **Alert options**: Configurable vibration (continuous/notification) and sound
+- **Action buttons**:
+  - **Complete Task**: Marks task done, cancels all alarms, exits app
+  - **Snooze**: Opens TimePicker for custom duration, creates new alarm, exits app
+  - **Dismiss**: Stops alerts and exits app
+- **Snooze TimePicker**: On-the-spot duration selection (HH:MM format)
+- **Default snooze duration**: Configurable in App-Based Reminder Settings
+- **Per-task settings**: Enable/disable app reminders, vibration type, sound for each task
+- **App-Based Reminder Settings screen**: Configure reminder behavior per task
+- **VALARM parsing**: Extracts reminder times from CalDAV tasks (TRIGGER;RELATED=END)
+- **Screen keep-alive**: Display stays on during alarm (10 minutes)
+
 #### Local Lists (New Offline Mode)
 - **Local task lists**: Create and manage multiple lists stored entirely on device
 - **Concurrent operation**: Use local lists alongside CalDAV lists simultaneously
@@ -47,6 +62,10 @@
 - Fresh install defaults to first available list (no crash)
 
 ### Fixed
+- **VALARM parser**: Handle both array and object alarm formats from CalDAV
+- **Multiple alarm triggers**: Added guards to prevent button multi-tap issues on ZeppOS
+- **Popup exit behavior**: App exits cleanly after alarm actions (no HomeScreen network sync)
+- **TaskReminderPopup crashes**: Fixed vibration/sound initialization errors
 - CalDAV iCalendar property parameter handling in parser
 - UTC timezone handling (Z suffix) on all timestamp fields
 - GPS location capture updated for API 3.0 Geolocation sensor
@@ -234,5 +253,5 @@ Watch ←BLE→ Phone ←HTTPS→ Vercel Proxy ←CalDAV→ Nextcloud
 | GEO         | ✅ | GPS coordinates |
 | LOCATION    | ✅ | Location text |
 | CATEGORIES  | ✅ | Multi-select tags with [#tag] display |
-| VALARM      | ✅ | TRIGGER;RELATED=END for DUE-relative reminders |
+| VALARM      | ✅ | Phone notifications + App-based reminders (ZeppOS Alarm API) |
 | RRULE       | ❌ | Not implemented |

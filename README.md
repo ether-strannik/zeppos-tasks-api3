@@ -4,29 +4,33 @@
 > This version focuses exclusively on Nextcloud/CalDAV synchronization.
 
 ## ⚠️ Major Changes from Original
-- Focus: Nextcloud/CalDAV only
-- Other sync providers (Google, Microsoft) will be removed/deprecated
-- Enhanced Nextcloud-specific features
-- Simplified configuration
+- **Nextcloud/CalDAV only** - Google Tasks, Microsoft To Do, and TickTick removed
+- **ZeppOS API 4.2** - Complete rewrite from API 1.0
+- **Native keyboard** - Uses SYSTEM_KEYBOARD (replaces ScreenBoard)
+- **App-based reminders** - Alarms trigger even when app is closed
+- **Local lists** - Offline task lists stored on device
+- **English only** - All translations removed
+- **Renamed to "Tasks NC"**
+- ...and more - See [CHANGELOG.md](CHANGELOG.md) for full details
 
 ---
+
+## Requirements
+
+- **ZeppOS API Level 4.2+** - Required for native keyboard support (SYSTEM_KEYBOARD)
+- Devices must support API 4.2 or higher
 
 ## Build Instructions
 
 Required software:
-- Python 3.10+
 - NodeJS and [ZeppOS CLI Tools](https://docs.zepp.com/docs/guides/tools/cli/)
 
 ### Building
 
-Clone this project **recursively**:
+Clone this project:
 ```bash
-git clone --recursive https://github.com/ether-strannik/ZeppOS-Nextcloud-Tasks.git
-```
-
-Build assets for all devices:
-```bash
-python3 prepare_all.py
+git clone https://github.com/ether-strannik/ZeppOS-Nextcloud-Tasks.git
+cd ZeppOS-Nextcloud-Tasks
 ```
 
 Deploy to watch:

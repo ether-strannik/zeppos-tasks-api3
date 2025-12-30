@@ -5,12 +5,14 @@ import { create, id } from "@zos/media";
 import { setWakeUpRelaunch, setPageBrightTime } from '@zos/display';
 import { getDeviceInfo } from "@zos/device";
 import { parseTaskAlarmParam, cancelTaskAlarms, createSnoozeAlarm } from "../../utils/app-reminder-manager";
+import { TimePicker } from "../../lib/mmk/TimePicker";
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = getDeviceInfo();
 const { config, t, tasksProvider } = getApp()._options.globalData;
 
 let alarmPlayer = null;
 let vibrator = null;
+let timePicker = null;
 let isProcessing = false; // Guard against multiple button taps
 
 Page({
@@ -373,15 +375,57 @@ Page({
             console.log('Snooze already processing, ignoring');
             return;
         }
-        isProcessing = true;
-        console.log('=== SNOOZE ===');
+        console.log('=== SNOOZE - SHOW PICKER ===');
 
-        // Get snooze duration from settings (global config)
+        // Stop alerts while picking duration
+        this.stopAlerts();
+
+        // Get default snooze duration from settings
         const snoozeDurations = [1, 5, 10, 15, 30, 60];
         const snoozeIndex = config.get("snooze_duration_index", 2); // default index 2 = 10 min
-        const snoozeMinutes = snoozeDurations[snoozeIndex] || 10;
+        const defaultMinutes = snoozeDurations[snoozeIndex] || 10;
+        const defaultHour = Math.floor(defaultMinutes / 60);
+        const defaultMin = defaultMinutes % 60;
 
-        console.log('Snooze duration:', snoozeMinutes, 'minutes');
+        // Store selected duration
+        this.snoozeHour = defaultHour;
+        this.snoozeMinute = defaultMin;
+
+        // Show TimePicker overlay
+        timePicker = new TimePicker({
+            initialHour: defaultHour,
+            initialMinute: defaultMin,
+            onSelect: (hour, minute) => {
+                this.snoozeHour = hour;
+                this.snoozeMinute = minute;
+                console.log(`Selected: ${hour}h ${minute}m`);
+            },
+            onConfirm: () => {
+                console.log('TimePicker confirmed');
+                this.createSnoozeAlarm();
+            }
+        });
+
+        timePicker.render();
+    },
+
+    createSnoozeAlarm() {
+        if (isProcessing) {
+            console.log('CreateSnoozeAlarm already processing, ignoring');
+            return;
+        }
+        isProcessing = true;
+        console.log('=== CREATE SNOOZE ALARM ===');
+
+        const totalMinutes = (this.snoozeHour * 60) + this.snoozeMinute;
+        console.log(`Duration: ${this.snoozeHour}h ${this.snoozeMinute}m = ${totalMinutes} minutes`);
+
+        if (totalMinutes === 0) {
+            console.log('ERROR: Zero duration');
+            hmUI.showToast({ text: t('Please select a duration') });
+            isProcessing = false;
+            return;
+        }
 
         // Create snooze alarm with same settings as original
         const settings = {
@@ -393,22 +437,25 @@ Page({
         const alarmId = createSnoozeAlarm(
             this.taskUID,
             this.taskTitle,
-            snoozeMinutes,
+            totalMinutes,
             settings
         );
 
         if (alarmId) {
             console.log('Snooze alarm created:', alarmId);
-            hmUI.showToast({ text: t(`Snoozed for ${snoozeMinutes} min`) });
+            const hoursText = this.snoozeHour > 0 ? `${this.snoozeHour}h ` : '';
+            const minutesText = this.snoozeMinute > 0 ? `${this.snoozeMinute}m` : '';
+            hmUI.showToast({ text: t(`Snoozed for ${hoursText}${minutesText}`) });
         } else {
             console.log('ERROR: Failed to create snooze alarm');
             hmUI.showToast({ text: t('Failed to snooze') });
         }
 
-        // Stop alerts
-        this.stopAlerts();
-
-        // Navigate to home
+        // Destroy picker and exit
+        if (timePicker) {
+            timePicker.destroy();
+            timePicker = null;
+        }
         exit();
     },
 
@@ -448,6 +495,16 @@ Page({
 
         // Reset module-level guard for next use
         isProcessing = false;
+
+        // Clean up TimePicker if shown
+        if (timePicker) {
+            try {
+                timePicker.destroy();
+                timePicker = null;
+            } catch (e) {
+                console.log('Error destroying TimePicker:', e);
+            }
+        }
 
         // Reset screen brightness to default (API 4.2)
         try {

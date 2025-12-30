@@ -120,12 +120,12 @@ class AppBasedReminderSettings extends ListScreen {
         // Show current scheduled time if any
         const nextAlarmTime = getNextScheduledAlarmTime(this.task.uid);
         if (nextAlarmTime) {
-            const month = nextAlarmTime.toLocaleString('en-US', { month: 'short' });
-            const day = nextAlarmTime.getDate();
+            const month = (nextAlarmTime.getMonth() + 1).toString().padStart(2, '0');
+            const day = nextAlarmTime.getDate().toString().padStart(2, '0');
             const hours = nextAlarmTime.getHours().toString().padStart(2, '0');
             const minutes = nextAlarmTime.getMinutes().toString().padStart(2, '0');
             this.text({
-                text: t("Scheduled: ") + `${month} ${day}, ${hours}:${minutes}`,
+                text: t("Scheduled: ") + `${month}/${day}, ${hours}:${minutes}`,
                 color: 0x00FF00
             });
             this.offset(8);

@@ -1,16 +1,17 @@
 import hmUI, { setStatusBarVisible } from "@zos/ui";
-import { replace, push } from "@zos/router";
+import { exit } from "@zos/router";
 import { Vibrator, VIBRATOR_SCENE_TIMER, VIBRATOR_SCENE_NOTIFICATION } from "@zos/sensor";
 import { create, id } from "@zos/media";
 import { setWakeUpRelaunch, setPageBrightTime } from '@zos/display';
 import { getDeviceInfo } from "@zos/device";
-import { parseTaskAlarmParam, cancelTaskAlarms } from "../../utils/app-reminder-manager";
+import { parseTaskAlarmParam, cancelTaskAlarms, createSnoozeAlarm } from "../../utils/app-reminder-manager";
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = getDeviceInfo();
 const { config, t, tasksProvider } = getApp()._options.globalData;
 
 let alarmPlayer = null;
 let vibrator = null;
+let isProcessing = false; // Guard against multiple button taps
 
 Page({
     onInit(params) {
@@ -256,7 +257,7 @@ Page({
             press_color: 0xDD8800,
             text: t('Snooze'),
             text_size: 24,
-            click_func: () => this.openSnoozePicker()
+            click_func: () => this.snooze()
         });
 
         // Dismiss button (red)
@@ -305,7 +306,7 @@ Page({
             press_color: 0xCC0000,
             text: t('Close'),
             text_size: 24,
-            click_func: () => replace({ url: 'page/amazfit/HomeScreen' })
+            click_func: () => exit()
         });
     },
 
@@ -333,13 +334,18 @@ Page({
     },
 
     completeTask() {
+        if (isProcessing) {
+            console.log('CompleteTask already processing, ignoring');
+            return;
+        }
+        isProcessing = true;
         console.log('=== COMPLETE TASK ===');
         this.stopAlerts();
 
         if (!this.task) {
             console.log('ERROR: Cannot complete - task not found');
             hmUI.showToast({ text: t('Error: Task not found') });
-            replace({ url: 'page/amazfit/HomeScreen' });
+            exit();
             return;
         }
 
@@ -359,42 +365,62 @@ Page({
             hmUI.showToast({ text: t('Error completing task') });
         }
 
-        replace({ url: 'page/amazfit/HomeScreen' });
+        exit();
     },
 
-    openSnoozePicker() {
-        console.log('=== OPEN SNOOZE PICKER ===');
-        this.stopAlerts();
+    snooze() {
+        if (isProcessing) {
+            console.log('Snooze already processing, ignoring');
+            return;
+        }
+        isProcessing = true;
+        console.log('=== SNOOZE ===');
 
-        // Pass settings for snooze alarm creation
+        // Get snooze duration from settings (global config)
+        const snoozeDurations = [1, 5, 10, 15, 30, 60];
+        const snoozeIndex = config.get("snooze_duration_index", 2); // default index 2 = 10 min
+        const snoozeMinutes = snoozeDurations[snoozeIndex] || 10;
+
+        console.log('Snooze duration:', snoozeMinutes, 'minutes');
+
+        // Create snooze alarm with same settings as original
         const settings = {
             vibrationEnabled: this.vibrationEnabled,
             vibrationType: this.vibrationType,
             soundEnabled: this.soundEnabled
         };
 
-        const paramObj = {
-            mode: 'snooze',
-            taskUID: this.taskUID,
-            taskTitle: this.taskTitle,
-            settings: settings
-        };
+        const alarmId = createSnoozeAlarm(
+            this.taskUID,
+            this.taskTitle,
+            snoozeMinutes,
+            settings
+        );
 
-        console.log('Opening DurationPickerScreen with params:', JSON.stringify(paramObj));
+        if (alarmId) {
+            console.log('Snooze alarm created:', alarmId);
+            hmUI.showToast({ text: t(`Snoozed for ${snoozeMinutes} min`) });
+        } else {
+            console.log('ERROR: Failed to create snooze alarm');
+            hmUI.showToast({ text: t('Failed to snooze') });
+        }
 
-        // Store params in config as workaround for API 3.0/4.0 push() not passing params
-        config.set("_durationPickerParams", paramObj);
+        // Stop alerts
+        this.stopAlerts();
 
-        push({
-            url: 'page/amazfit/DurationPickerScreen',
-            param: JSON.stringify(paramObj)
-        });
+        // Navigate to home
+        exit();
     },
 
     dismiss() {
+        if (isProcessing) {
+            console.log('Dismiss already processing, ignoring');
+            return;
+        }
+        isProcessing = true;
         console.log('=== DISMISS ===');
         this.stopAlerts();
-        replace({ url: 'page/amazfit/HomeScreen' });
+        exit();
     },
 
     stopAlerts() {
@@ -419,6 +445,9 @@ Page({
 
     onDestroy() {
         console.log('=== TASK REMINDER POPUP DESTROY ===');
+
+        // Reset module-level guard for next use
+        isProcessing = false;
 
         // Reset screen brightness to default (API 4.2)
         try {

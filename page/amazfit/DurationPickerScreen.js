@@ -6,6 +6,7 @@ import { createSnoozeAlarm } from "../../utils/app-reminder-manager";
 const { config, t } = getApp()._options.globalData;
 
 let timePicker = null;
+let isProcessingSnooze = false; // Module-level guard against multiple page instances
 
 Page({
     onInit(params) {
@@ -70,12 +71,14 @@ Page({
                 this.createSnooze();
             },
             onCancel: () => {
+                if (isProcessingSnooze) return;
+                isProcessingSnooze = true;
                 console.log('Cancel pressed');
                 replace({ url: 'page/amazfit/HomeScreen' });
             }
         });
 
-        timePicker.show();
+        timePicker.render();
     },
 
     showError() {
@@ -105,6 +108,13 @@ Page({
     },
 
     createSnooze() {
+        // Module-level guard against multiple rapid calls (works across page instances)
+        if (isProcessingSnooze) {
+            console.log('createSnooze already in progress, ignoring');
+            return;
+        }
+        isProcessingSnooze = true;
+
         console.log('=== CREATE SNOOZE ALARM ===');
 
         const hours = this.hour || 0;
@@ -116,12 +126,14 @@ Page({
         if (totalMinutes === 0) {
             console.log('ERROR: Zero duration selected');
             hmUI.showToast({ text: t('Please select a duration') });
+            isProcessingSnooze = false;  // Allow retry
             return;
         }
 
         if (totalMinutes > 1440) {  // Max 24 hours
             console.log('ERROR: Duration too long');
             hmUI.showToast({ text: t('Maximum 24 hours') });
+            isProcessingSnooze = false;  // Allow retry
             return;
         }
 
@@ -156,5 +168,7 @@ Page({
                 console.log('Error destroying TimePicker:', e);
             }
         }
+        // Reset module-level guard for next use
+        isProcessingSnooze = false;
     }
 });

@@ -154,6 +154,22 @@ class AppBasedReminderSettings extends ListScreen {
             callback: () => this.toggleSound()
         });
 
+        // Snooze section (global setting)
+        this.offset(16);
+        this.headline(t("Snooze"));
+
+        // Snooze duration picker
+        const snoozeDurations = [1, 5, 10, 15, 30, 60];
+        const savedSnoozeIndex = config.get("snooze_duration_index", 2); // default 10 min
+        this.snoozeIndex = savedSnoozeIndex;
+        const snoozeText = this.formatSnoozeDuration(snoozeDurations[this.snoozeIndex]);
+
+        this.rows.snooze = this.row({
+            text: snoozeText,
+            icon: "icon_s/alarm.png",
+            callback: () => this.cycleSnoozeDuration()
+        });
+
         // Save button
         this.offset(32);
         this.row({
@@ -194,9 +210,30 @@ class AppBasedReminderSettings extends ListScreen {
         console.log("Toggled sound:", this.settings.soundEnabled);
     }
 
+    formatSnoozeDuration(minutes) {
+        if (minutes >= 60) {
+            return `${minutes / 60} ${t("hour")}`;
+        }
+        return `${minutes} ${t("min")}`;
+    }
+
+    cycleSnoozeDuration() {
+        const snoozeDurations = [1, 5, 10, 15, 30, 60];
+        this.snoozeIndex = (this.snoozeIndex + 1) % snoozeDurations.length;
+        const snoozeText = this.formatSnoozeDuration(snoozeDurations[this.snoozeIndex]);
+        this.rows.snooze.textView.setProperty(hmUI.prop.TEXT, snoozeText);
+        console.log("Changed snooze duration to:", snoozeDurations[this.snoozeIndex], "min (index:", this.snoozeIndex + ")");
+    }
+
     save() {
         console.log("=== SAVE APP-BASED REMINDER SETTINGS ===");
         console.log("Settings:", JSON.stringify(this.settings));
+
+        // Save snooze duration (global setting)
+        if (this.snoozeIndex !== undefined) {
+            config.set("snooze_duration_index", this.snoozeIndex);
+            console.log("Saved snooze duration index:", this.snoozeIndex);
+        }
 
         if (this.settings.enabled) {
             console.log("App-based reminders enabled - creating alarms");

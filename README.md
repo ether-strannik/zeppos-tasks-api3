@@ -29,8 +29,8 @@ Required software:
 
 Clone this project:
 ```bash
-git clone https://github.com/ether-strannik/ZeppOS-Nextcloud-Tasks.git
-cd ZeppOS-Nextcloud-Tasks
+git clone https://github.com/ether-strannik/zeppos-tasks-nc-api4.git
+cd zeppos-tasks-nc-api4
 ```
 
 Deploy to watch:

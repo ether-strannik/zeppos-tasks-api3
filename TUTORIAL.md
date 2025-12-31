@@ -108,7 +108,6 @@ After entering your credentials correctly, you'll see the **"Login success"** co
 **Next steps:**
 - The configuration is saved in the Zepp app
 - Open the Tasks NC app on your watch
-- Pull down to sync and download your tasks
 
 **To disconnect:** Tap **"Log out"** if you need to change servers or credentials.
 
@@ -130,15 +129,14 @@ After setup, open the Tasks NC app on your watch. You'll see the **Task Lists** 
 - Lists synced from your Nextcloud server appear at the top
 - Example: **"Today"** - your default Nextcloud task list
 - Tap any list to view its tasks
-- Pull down to refresh and sync with server
 
 #### Local Lists (Offline)
 - **+ Create local list** - Create a new offline task list stored on your watch
-- **📋 Manage local lists...** - View, edit, or delete existing local lists
+- **Manage local lists...** - View, edit, or delete existing local lists
 - Local lists work completely offline without internet
 
 #### Settings
-- **⚙️ Settings** - Configure app preferences (sorting, display options, etc.)
+- **Settings** - Configure app preferences (sorting, display options, etc.)
 
 **Tip:** You can use both CalDAV and local lists simultaneously. For example, sync work tasks from Nextcloud while keeping personal tasks in a local list.
 
@@ -158,7 +156,7 @@ After setup, open the Tasks NC app on your watch. You'll see the **Task Lists** 
   <img src="docs/screenshots/8.jpg" width="300" alt="Settings Screen - Part 3">
 </p>
 
-Access the Settings screen by tapping **⚙️ Settings** from the Task Lists screen.
+Access the Settings screen by tapping **Settings** from the Task Lists screen.
 
 ### User Interface
 
@@ -169,29 +167,29 @@ Access the Settings screen by tapping **⚙️ Settings** from the Task Lists sc
 
 ### Additional Features
 
-**✓ Show complete tasks**
+**Show complete tasks**
 - Toggle ON: Completed tasks remain visible in your list (shown with checkmark)
 - Toggle OFF: Completed tasks are hidden from view
 - Helps keep your list focused on active tasks
 
-**✓ Sort alphabetically**
+**Sort alphabetically**
 - Toggle ON: Tasks are sorted A-Z by title
 - Toggle OFF: Tasks appear in the order they were created
 - Applies within each task list
 
-**✓ Show reminder countdown**
+**Show reminder countdown**
 - Toggle ON: Display time until due date (e.g., "8.5h", "2d")
 - Toggle OFF: Hide countdown badges
 - Helpful for seeing how much time is left at a glance
 
-**✓ Show categories**
+**Show categories**
 - Toggle ON: Display category tags on tasks (e.g., [#Work], [#Personal])
 - Toggle OFF: Hide category badges
 - Useful if you use categories to organize tasks
 
 ### Synchronization
 
-**○ Pull down to refresh**
+**Pull down to refresh**
 - Toggle ON: Enable pull-down gesture to sync with Nextcloud
 - Toggle OFF: Manual sync only (prevents accidental syncs)
 - When enabled, swipe down from the top of a task list to sync
@@ -199,14 +197,14 @@ Access the Settings screen by tapping **⚙️ Settings** from the Task Lists sc
 
 ### On Launch Open
 
-**📋 Last viewed list**
+**Last viewed list**
 - App opens to the last list you were viewing
 - Alternative: Tap to select a specific list to always open
 - Useful if you primarily use one task list
 
 ### Advanced
 
-**⚡ Wipe ALL local data**
+**Wipe ALL local data**
 - Deletes all cached data and local lists from your watch
 - **Your Nextcloud server data is NOT affected** - server tasks remain safe
 - Use when:
@@ -251,7 +249,7 @@ When you open a task list, you'll see all your tasks with visual indicators for 
 #### Category Tags
 - Displayed as colored badges next to task name
 - Example: **#tag** shown on "task 2"
-- Multiple categories can be assigned per task
+- The app will show parent category first
 
 #### Due Date Countdown
 - Shows time remaining until due date
@@ -293,7 +291,7 @@ When you open a task list, you'll see all your tasks with visual indicators for 
 #### Completing Tasks
 **Tap the Checkbox**
 - Tap the colored ring (checkbox) to mark task complete
-- Completed tasks show a checkmark ✓
+- Completed tasks show a checkmark
 - If "Show complete tasks" is disabled, completed tasks hide automatically
 
 ---
@@ -319,12 +317,12 @@ After tapping **Edit** on a task, you can modify all task properties supported b
 ### Available Fields
 
 #### Title
-- ✏️ **task 1** - Tap to edit task title
+- **task 1** - Tap to edit task title
 - Native keyboard appears for editing
 - Required field
 
 #### Notes
-- ✏️ **Add notes** - Add detailed description/notes for the task
+- **Add notes** - Add detailed description/notes for the task
 - Supports multi-line text
 - Optional field
 
@@ -338,32 +336,32 @@ After tapping **Edit** on a task, you can modify all task properties supported b
   - 0: None (default)
 
 #### Categories
-- ✏️ **Add categories** - Tag tasks with categories
+- **Add categories** - Tag tasks with categories
 - Multi-select picker (Work, Personal, Urgent, etc.)
 - Create new categories or select existing ones
 - Displayed as badges on task list
 
 #### Start Date
-- 📅 **Not set** - Set when task should start
+- **Not set** - Set when task should start
 - Opens visual calendar picker
 - Optional field
 - Date validation prevents start date after due date
 
 #### Due Date
-- 📅 **Not set** - Set task deadline
+- **Not set** - Set task deadline
 - Opens visual calendar picker
 - Displays countdown in task list when set
 - Optional field
 
 #### Reminder
-- ⏰ **Not set** - Configure VALARM reminder
+- **Not set** - Configure VALARM reminder
 - App-based reminders using ZeppOS Alarm API
 - Fires even when app is closed
 - Presets: 5min, 10min, 15min, 30min, 1h, 2h, 1d before due
 - Compatible with Tasks.org on Android
 
 #### Location
-- 📍 **Add current location** - Capture GPS coordinates
+- **Add current location** - Capture GPS coordinates
 - Automatically captures your current position
 - Stores both GEO (coordinates) and LOCATION (address) properties
 - Optional field
@@ -374,7 +372,7 @@ After tapping **Edit** on a task, you can modify all task properties supported b
 - The task syncs to Nextcloud immediately (if CalDAV list)
 - Local lists save changes to device storage
 
-**Note:** RRULE (recurring tasks) is currently in development and not yet available.
+**Note:** RRULE (recurring tasks) implementation is pending.
 
 ---
 
@@ -397,14 +395,14 @@ Scroll down in the task edit screen to access additional features:
 - Displayed indented in the task list
 
 #### Calendar
-**📅 Add to calendar**
+**Add to calendar**
 - Convert task into a calendar event (VEVENT)
 - Syncs to your Nextcloud calendar
 - Pre-fills event with task data
 - Useful for time-blocking tasks
 
 #### Delete
-**🗑️ Delete**
+**Delete**
 - Permanently delete the task
 - Confirmation required (double-tap)
 - Syncs deletion to Nextcloud (for CalDAV lists)
@@ -420,10 +418,10 @@ Scroll down in the task edit screen to access additional features:
 When you tap **Add to calendar**, you can create a calendar event (VEVENT) from your task:
 
 **Pre-filled Fields:**
-- ✏️ **Title: task 1** - Inherited from task title (editable)
-- 📅 **Start: (tap to set)** - Set event start time
-- 📅 **End: (tap to set)** - Set event end time  
-- 📍 **Location: (none)** - Inherited from task location (if set)
+- **Title: task 1** - Inherited from task title (editable)
+- **Start: (tap to set)** - Set event start time
+- **End: (tap to set)** - Set event end time
+- **Location: (none)** - Inherited from task location (if set)
 
 **Additional properties synced:**
 - Task description → Event description
@@ -471,7 +469,7 @@ When you set a **Due Date** and **Reminder** on a task, it creates a standard Ca
 - **10 min before, 15 min before, 30 min before** (scrollable)
 - **1h before, 2h before, 1d before** (more options)
 
-**🗑️ Clear reminder** - Remove the reminder
+**Clear reminder** - Remove the reminder
 
 **How it works:**
 - Uses standard VALARM property (Tasks.org compatible)
@@ -492,16 +490,18 @@ When you set a **Due Date** and **Reminder** on a task, it creates a standard Ca
 The app includes **App-Based Reminders** using ZeppOS Alarm API:
 
 **Key Differences:**
-- ✅ **Persistent** - Continuous vibration and sound until dismissed
-- ✅ **Works offline** - No phone or internet needed
-- ✅ **Alarm-style** - Like a real alarm, not just a notification
-- ✅ **Locally saved** - Stored on watch, not CalDAV server
-- ✅ **Full control** - Snooze, complete task, or dismiss
+- **CalDAV**: Requires phone connection when reminder fires
+- **App-based**: Requires connection when setting up, but fires independently after that
+- **Persistent** - Continuous vibration and sound until dismissed
+- **Alarm-style** - Like a real alarm, not just a notification
+- **Locally saved** - Stored on watch, not CalDAV server
+- **Full control** - Snooze, complete task, or dismiss
 
 **How to enable:**
-1. Edit task and set reminder
-2. Task edit screen shows **"App: 12/30, 19:04"** - next scheduled alarm
-3. When alarm fires, you get full-screen popup with options
+1. Edit task and set due date and standard reminder
+2. After due date and standard reminder have been set, set app-based reminder
+3. Task edit screen shows **"App: 12/30, 19:04"** - next scheduled alarm
+4. When alarm fires, you get full-screen popup with options
 
 **When alarm fires:**
 - Full-screen alert popup appears
@@ -511,9 +511,7 @@ The app includes **App-Based Reminders** using ZeppOS Alarm API:
 
 **Use cases:**
 - Important deadlines that can't be missed
-- When phone isn't nearby
 - Tasks requiring persistent reminders
-- Privacy (no phone sync needed)
 
 **Note:** App-based reminders are independent from CalDAV VALARM. You can use both simultaneously for maximum reliability!
 
@@ -528,17 +526,16 @@ The app includes **App-Based Reminders** using ZeppOS Alarm API:
 Before the alarm fires, you can configure default behavior in the task edit screen:
 
 **Sound and vibration:**
-- **○ OFF** - Toggle to enable/disable sound and vibration for this task
+- **OFF** - Toggle to enable/disable sound and vibration for this task
 - Customizable per task
 
 **Snooze:**
-- **⏰ 5 min** - Default snooze duration
+- **5 min** - Default snooze duration
 - Tap to change (1min, 5min, 10min, 15min, 30min, 1h options)
 - This is the initial snooze time when alarm fires
 
-**📅 Schedule reminder:**
-- Configure when the app-based reminder should fire
-- Independent of CalDAV VALARM
+**Schedule reminder:**
+- Schedules reminder independent of CalDAV VALARM
 
 ---
 
@@ -556,26 +553,26 @@ When your app-based reminder triggers, a full-screen alarm popup appears:
 - Both displayed clearly at the top
 
 **Alert Behavior:**
-- Continuous vibration (until dismissed)
+- Continuous or non-continious vibration
 - Sound alerts (if enabled)
 - Screen stays on for 10 minutes
 - Works even when app is closed
 
 **Three Action Buttons:**
 
-**✅ Complete** (Green)
+**Complete** (Green)
 - Marks task as complete
 - Cancels all future alarms for this task
 - Syncs completion to Nextcloud (if CalDAV list)
 - Closes app
 
-**💤 Snooze** (Yellow/Orange)
+**Snooze** (Yellow/Orange)
 - Opens time picker to set snooze duration
 - Creates new alarm for specified time
 - Task remains incomplete
 - Closes app
 
-**🔴 Dismiss** (Red)
+**Dismiss** (Red)
 - Stops vibration and sound immediately
 - Task remains incomplete
 - No new alarm created
@@ -609,8 +606,6 @@ When you tap **Snooze**, a time picker appears:
 3. Enter "00:15" (15 minutes)
 4. New alarm set for 2:15 PM
 
-This flexible snooze system ensures you never miss important tasks, even without your phone nearby!
-
 ---
 
 ## Native Keyboard (API 4.2)
@@ -627,57 +622,22 @@ This flexible snooze system ensures you never miss important tasks, even without
 
 Starting with ZeppOS API 4.2, Tasks NC uses the native **SYSTEM_KEYBOARD** for all text input. This provides a much better user experience compared to custom keyboards.
 
-#### T9 Keyboard Layout
+T9 Keyboard with voice dictation makes Tasks NC truly practical for quick task capture.
 
-The keyboard appears whenever you need to enter text (task titles, notes, categories, list names):
-
-**Layout:**
-- **Numeric keypad** - Classic T9 style (like old phones)
-- Press number keys multiple times to cycle through letters
-- Example: "2" → A → B → C, "5" → J → K → L
-
-**Special Keys:**
-- **?123** - Switch to numbers/symbols
-- **Microphone 🎤** - Voice dictation (see below)
-- **Backspace ←** - Delete characters
-- **Emoji 😊** - Insert emojis
-- **Globe 🌐** - Switch keyboard language
-- **Spacebar** - Add space
-- **Up arrow ⬆** - Submit/confirm input
-
-#### Voice Dictation
-
-**The game-changer for task management on your watch:**
-
-Tap the **🎤 microphone icon** to activate voice input:
-
-**"Tap to dictate"**
-- Speak naturally into your watch
-- Extremely accurate transcription
-- Supports full sentences and punctuation
-- Works for all text fields
+Tap the **microphone icon** to activate voice input:
 
 **Perfect for:**
 - Creating tasks quickly: "Buy groceries for dinner"
 - Adding detailed notes: "Remember to pick up milk, eggs, and bread from the store on Main Street"
 - Setting task descriptions without typing
 - Creating multiple tasks rapidly
-- Adding categories or locations
-
-**Why voice input is essential:**
-- **Speed** - Much faster than T9 typing on a watch
-- **Accuracy** - Transcription quality is excellent
-- **Natural** - Just speak what you need to remember
-- **Hands-free** - Great when you're busy or on the go
 
 **Example workflow:**
 1. Tap **+** to create task
-2. Tap **🎤** microphone
+2. Tap microphone
 3. Say: "Call dentist to reschedule appointment"
 4. Text appears instantly
-5. Tap **⬆** to save
-
-This makes Tasks NC truly practical for quick task capture - as fast as pulling out your phone!
+5. Tap to save
 
 ---
 
@@ -699,21 +659,20 @@ Local lists are task lists stored entirely on your watch, independent of any Nex
 **Local List Features:**
 
 Local lists support **all the same features** as CalDAV lists:
-- ✅ Task titles and descriptions
-- ✅ Priority levels (0-9) with colored rings
-- ✅ Categories/tags
-- ✅ Subtasks with unlimited nesting
-- ✅ Due dates with countdown
-- ✅ Start dates
-- ✅ GPS location
-- ✅ Task completion status
-- ✅ Alphabetical sorting
-- ⚠️ **Reminders** - Currently in development
+- Task titles and descriptions
+- Priority levels (0-9) with colored rings
+- Categories/tags
+- Subtasks with unlimited nesting
+- Due dates with countdown
+- Start dates
+- GPS location
+- Task completion status
+- Alphabetical sorting
+- **Reminders** - Implementation pending
 
 **Key Differences from CalDAV Lists:**
 - **No sync** - Data stays on your watch only
 - **No internet needed** - Works completely offline
-- **Privacy** - Tasks never leave your device
 - **Fast** - No network delays
 - **Independent** - Not tied to any server
 
@@ -723,11 +682,6 @@ Local lists support **all the same features** as CalDAV lists:
 - Quick temporary task lists
 - When you don't have a Nextcloud server
 - Offline-only workflows
-
-**Managing Local Lists:**
-- Tap **📋 Manage local lists...** from Task Lists screen
-- Select lists to delete (multi-select)
-- Local lists persist across app restarts
 
 **Combined Workflow:**
 You can use local lists and CalDAV lists simultaneously. For example:
@@ -748,14 +702,14 @@ You can use local lists and CalDAV lists simultaneously. For example:
 
 #### Deleting Local Lists
 
-From the Task Lists screen, tap **📋 Manage local lists...** to manage your offline lists.
+From the Task Lists screen, tap **Manage local lists...** to manage your offline lists.
 
 **Manage Local Lists Screen:**
 - Lists all local lists stored on your watch
 - Tap a list name to select it (checkbox appears)
 - Select multiple lists if needed
 
-**🗑️ Delete selected lists**
+**Delete selected lists**
 - Tap to delete all selected lists
 - **Warning:** "This will permanently delete the selected local lists and all their tasks"
 - Cannot be undone - tasks are permanently removed from your watch
@@ -768,12 +722,11 @@ The main **Task Lists** screen shows all your lists organized by type:
 **CalDAV Lists:**
 - Synced from your Nextcloud server
 - Examples: "Task List", "Today"
-- Pull down to refresh and sync
 - Require internet connection
 
 **Local Lists:**
 - **+ Create local list** - Create new offline list
-- **📋 Manage local lists...** - Delete existing local lists
+- **Manage local lists...** - Delete existing local lists
 
 **Combined View:**
 - Both CalDAV and local lists accessible from same screen
@@ -785,14 +738,13 @@ The main **Task Lists** screen shows all your lists organized by type:
 ## Tips & Tricks
 
 ### Quick Task Capture
-- Use **voice dictation** (🎤) for fastest task creation
+- Use **voice dictation** for fastest task creation
 - Speak naturally: "Buy groceries tonight at 6pm"
 - Add details immediately while you remember them
 
 ### Sync Best Practices
 - **Pull down to refresh** when you need latest tasks from Nextcloud
 - Enable "Pull down to refresh" in Settings for quick sync gesture
-- If sync fails, try **Wipe ALL local data** in Settings (server data is safe)
 
 ### Reminder Strategy
 **For maximum reliability, use both:**
@@ -809,27 +761,12 @@ The main **Task Lists** screen shows all your lists organized by type:
 - Create **subtasks** for multi-step projects
 - Use **local lists** for private tasks that shouldn't sync
 
-### Battery Optimization
-- Disable "Show reminder countdown" if you don't need it
-- Turn off app-based reminders for non-critical tasks
-- Use local lists to avoid constant sync overhead
-
-### Keyboard Shortcuts
-- **Swipe left** on task → reveals Edit button (faster than opening)
-- **Double-tap** to delete tasks (prevents accidents)
-- **Tap list name** at top to go back (don't hunt for back button)
-
 ### Troubleshooting
+
 **Sync not working?**
 1. Check credentials in Zepp app settings
-2. Verify server URL ends with `/dav/`
-3. Use app password if you have 2FA enabled
-4. Try "Wipe ALL local data" for fresh start
-
-**App-based reminders not firing?**
-1. Check that alarm is set ("App: date/time" shown in edit screen)
-2. Verify sound/vibration enabled in task settings
-3. Ensure watch has sufficient battery
+2. Use app password if you have 2FA enabled
+3. Try "Wipe ALL local data" for fresh start
 
 **Tasks not showing?**
 1. Pull down to refresh

@@ -18,7 +18,7 @@ Page({
       const reader = new MarkdownRenderScreen(resolver, filename);
       reader.start();
     } catch(e) {
-      console.log(e);
+      // Ignore parsing errors
     }
   },
 

@@ -17,13 +17,9 @@ let isProcessing = false; // Guard against multiple button taps
 
 Page({
     onInit(params) {
-        console.log('=== TASK REMINDER POPUP INIT ===');
-        console.log('Params:', params);
-
         // Parse alarm params
         const parsed = parseTaskAlarmParam(params);
         if (!parsed) {
-            console.log('ERROR: Failed to parse task alarm params');
             this.error = true;
             return;
         }
@@ -35,27 +31,15 @@ Page({
         this.vibrationType = parsed.vibrationType;
         this.soundEnabled = parsed.soundEnabled;
 
-        console.log('Task UID:', this.taskUID);
-        console.log('Task Title:', this.taskTitle);
-        console.log('Task Description:', this.taskDescription);
-        console.log('Vibration:', this.vibrationEnabled, this.vibrationType);
-        console.log('Sound:', this.soundEnabled);
-
         // Load full task by UID
         this.task = this.findTaskByUID(this.taskUID);
-
-        if (!this.task) {
-            console.log('WARNING: Task not found by UID');
-            // Continue anyway - we have at least the title from params
-        }
 
         // Keep screen on during alarm (use long bright time for API 4.2)
         try {
             setPageBrightTime({ brightTime: 600000 }); // 10 minutes
             setWakeUpRelaunch({ relaunch: true });
-            console.log('Screen keep enabled');
         } catch (e) {
-            console.log('Error setting screen keep:', e);
+            // Ignore errors
         }
 
         // Start alerts
@@ -65,23 +49,18 @@ Page({
         if (this.soundEnabled) {
             this.startSound();
         }
-
-        console.log('=== TASK REMINDER POPUP INIT COMPLETE ===');
     },
 
     /**
      * Find task by UID across all lists
      */
     findTaskByUID(uid) {
-        console.log('Searching for task with UID:', uid);
-
         try {
             // Get all task lists
             const lists = tasksProvider.getTaskLists();
 
             // Handle case where getTaskLists returns non-iterable value
             if (!lists || !Array.isArray(lists) || lists.length === 0) {
-                console.log('No task lists available or not an array');
                 return null;
             }
 
@@ -91,16 +70,13 @@ Page({
                 if (list && typeof list.getTask === 'function') {
                     const task = list.getTask(uid);
                     if (task) {
-                        console.log('Found task in list:', list.id);
                         return task;
                     }
                 }
             }
 
-            console.log('Task not found in any list');
             return null;
         } catch (e) {
-            console.log('Error in findTaskByUID:', e);
             return null;
         }
     },
@@ -115,10 +91,8 @@ Page({
             vibrator.start();
             vibrator.setMode(vibrationMode);
             vibrator.start();
-
-            console.log(`Vibration started (${this.vibrationType})`);
         } catch (e) {
-            console.log('Vibration error:', e);
+            // Ignore errors
         }
     },
 
@@ -129,31 +103,18 @@ Page({
             alarmPlayer.addEventListener(alarmPlayer.event.PREPARE, (result) => {
                 if (result) {
                     alarmPlayer.start();
-                    console.log('Sound started');
-                } else {
-                    console.log('Sound prepare failed');
                 }
             });
 
-            alarmPlayer.addEventListener(alarmPlayer.event.START, () => {
-                console.log('Sound playback started');
-            });
-
             alarmPlayer.addEventListener(alarmPlayer.event.COMPLETE, () => {
-                console.log('Sound complete - looping');
                 // Loop audio by re-preparing
                 alarmPlayer.prepare();
             });
 
-            alarmPlayer.addEventListener(alarmPlayer.event.ERROR, (error) => {
-                console.log('Sound error:', error);
-            });
-
             alarmPlayer.setSource(alarmPlayer.source.FILE, { file: 'task-alarm.mp3' });
             alarmPlayer.prepare();
-            console.log('Sound preparation started');
         } catch (e) {
-            console.log('Sound error:', e);
+            // Ignore errors
         }
     },
 
@@ -192,15 +153,7 @@ Page({
         yPos += 85;
 
         // Task notes/description (if available - from alarm param, not task lookup)
-        console.log('=== BUILD: Checking description ===');
-        console.log('this.taskDescription:', this.taskDescription);
-        console.log('this.taskDescription truthy:', !!this.taskDescription);
-        console.log('trim result:', this.taskDescription ? this.taskDescription.trim() : 'N/A');
-        console.log('trim truthy:', !!(this.taskDescription && this.taskDescription.trim()));
-
         if (this.taskDescription && this.taskDescription.trim()) {
-            console.log('=== CREATING DESCRIPTION WIDGET ===');
-            console.log('yPos:', yPos);
             hmUI.createWidget(hmUI.widget.TEXT, {
                 x: 20,
                 y: yPos,
@@ -341,16 +294,11 @@ Page({
     },
 
     completeTask() {
-        if (isProcessing) {
-            console.log('CompleteTask already processing, ignoring');
-            return;
-        }
+        if (isProcessing) return;
         isProcessing = true;
-        console.log('=== COMPLETE TASK ===');
         this.stopAlerts();
 
         if (!this.task) {
-            console.log('ERROR: Cannot complete - task not found');
             hmUI.showToast({ text: t('Error: Task not found') });
             exit();
             return;
@@ -358,17 +306,13 @@ Page({
 
         try {
             // Mark task completed
-            console.log('Marking task completed');
             this.task.setCompleted(true);
 
             // Cancel all alarms for this task
-            console.log('Cancelling alarms for task:', this.taskUID);
             cancelTaskAlarms(this.taskUID);
 
-            console.log('Task completed successfully');
             hmUI.showToast({ text: t('Task completed') });
         } catch (e) {
-            console.log('Error completing task:', e);
             hmUI.showToast({ text: t('Error completing task') });
         }
 
@@ -376,11 +320,7 @@ Page({
     },
 
     snooze() {
-        if (isProcessing) {
-            console.log('Snooze already processing, ignoring');
-            return;
-        }
-        console.log('=== SNOOZE - SHOW PICKER ===');
+        if (isProcessing) return;
 
         // Stop alerts while picking duration
         this.stopAlerts();
@@ -403,10 +343,8 @@ Page({
             onSelect: (hour, minute) => {
                 this.snoozeHour = hour;
                 this.snoozeMinute = minute;
-                console.log(`Selected: ${hour}h ${minute}m`);
             },
             onConfirm: () => {
-                console.log('TimePicker confirmed');
                 this.createSnoozeAlarm();
             }
         });
@@ -415,18 +353,12 @@ Page({
     },
 
     createSnoozeAlarm() {
-        if (isProcessing) {
-            console.log('CreateSnoozeAlarm already processing, ignoring');
-            return;
-        }
+        if (isProcessing) return;
         isProcessing = true;
-        console.log('=== CREATE SNOOZE ALARM ===');
 
         const totalMinutes = (this.snoozeHour * 60) + this.snoozeMinute;
-        console.log(`Duration: ${this.snoozeHour}h ${this.snoozeMinute}m = ${totalMinutes} minutes`);
 
         if (totalMinutes === 0) {
-            console.log('ERROR: Zero duration');
             hmUI.showToast({ text: t('Please select a duration') });
             isProcessing = false;
             return;
@@ -448,12 +380,10 @@ Page({
         );
 
         if (alarmId) {
-            console.log('Snooze alarm created:', alarmId);
             const hoursText = this.snoozeHour > 0 ? `${this.snoozeHour}h ` : '';
             const minutesText = this.snoozeMinute > 0 ? `${this.snoozeMinute}m` : '';
             hmUI.showToast({ text: t(`Snoozed for ${hoursText}${minutesText}`) });
         } else {
-            console.log('ERROR: Failed to create snooze alarm');
             hmUI.showToast({ text: t('Failed to snooze') });
         }
 
@@ -466,12 +396,8 @@ Page({
     },
 
     dismiss() {
-        if (isProcessing) {
-            console.log('Dismiss already processing, ignoring');
-            return;
-        }
+        if (isProcessing) return;
         isProcessing = true;
-        console.log('=== DISMISS ===');
         this.stopAlerts();
         exit();
     },
@@ -480,25 +406,21 @@ Page({
         if (vibrator) {
             try {
                 vibrator.stop();
-                console.log('Vibration stopped');
             } catch (e) {
-                console.log('Error stopping vibrator:', e);
+                // Ignore errors
             }
         }
 
         if (alarmPlayer) {
             try {
                 alarmPlayer.stop();
-                console.log('Sound stopped');
             } catch (e) {
-                console.log('Error stopping sound:', e);
+                // Ignore errors
             }
         }
     },
 
     onDestroy() {
-        console.log('=== TASK REMINDER POPUP DESTROY ===');
-
         // Reset module-level guard for next use
         isProcessing = false;
 
@@ -508,16 +430,15 @@ Page({
                 timePicker.destroy();
                 timePicker = null;
             } catch (e) {
-                console.log('Error destroying TimePicker:', e);
+                // Ignore errors
             }
         }
 
         // Reset screen brightness to default (API 4.2)
         try {
             setPageBrightTime({ brightTime: 15000 }); // Reset to 15 seconds
-            console.log('Screen bright time reset');
         } catch (e) {
-            console.log('Error resetting screen bright time:', e);
+            // Ignore errors
         }
 
         this.stopAlerts();

@@ -10,13 +10,9 @@ let isProcessingSnooze = false; // Module-level guard against multiple page inst
 
 Page({
     onInit(params) {
-        console.log('=== DURATION PICKER INIT ===');
-        console.log('Params:', params);
-
         try {
             params = (params && params !== "undefined") ? JSON.parse(params) : {};
         } catch(e) {
-            console.log("DurationPickerScreen param parse error:", e);
             params = {};
         }
 
@@ -24,7 +20,6 @@ Page({
         if (!params.taskUID || !params.taskTitle) {
             const savedParams = config.get("_durationPickerParams");
             if (savedParams) {
-                console.log("Using fallback params from config:", JSON.stringify(savedParams));
                 params = savedParams;
                 // Clear the saved params
                 config.set("_durationPickerParams", null);
@@ -36,13 +31,7 @@ Page({
         this.taskTitle = params.taskTitle;
         this.settings = params.settings || {};
 
-        console.log('Mode:', this.mode);
-        console.log('Task UID:', this.taskUID);
-        console.log('Task Title:', this.taskTitle);
-        console.log('Settings:', JSON.stringify(this.settings));
-
         if (!this.taskUID || !this.taskTitle) {
-            console.log('ERROR: Missing required params');
             this.error = true;
             return;
         }
@@ -62,18 +51,15 @@ Page({
             initialHour: 0,
             initialMinute: 15,  // Default 15 minutes
             onSelect: (hour, minute) => {
-                console.log(`Selected duration: ${hour}h ${minute}m`);
                 this.hour = hour;
                 this.minute = minute;
             },
             onConfirm: () => {
-                console.log('Confirm pressed');
                 this.createSnooze();
             },
             onCancel: () => {
                 if (isProcessingSnooze) return;
                 isProcessingSnooze = true;
-                console.log('Cancel pressed');
                 replace({ url: 'page/amazfit/HomeScreen' });
             }
         });
@@ -109,29 +95,20 @@ Page({
 
     createSnooze() {
         // Module-level guard against multiple rapid calls (works across page instances)
-        if (isProcessingSnooze) {
-            console.log('createSnooze already in progress, ignoring');
-            return;
-        }
+        if (isProcessingSnooze) return;
         isProcessingSnooze = true;
-
-        console.log('=== CREATE SNOOZE ALARM ===');
 
         const hours = this.hour || 0;
         const minutes = this.minute || 0;
         const totalMinutes = (hours * 60) + minutes;
 
-        console.log(`Duration: ${hours}h ${minutes}m = ${totalMinutes} minutes`);
-
         if (totalMinutes === 0) {
-            console.log('ERROR: Zero duration selected');
             hmUI.showToast({ text: t('Please select a duration') });
             isProcessingSnooze = false;  // Allow retry
             return;
         }
 
         if (totalMinutes > 1440) {  // Max 24 hours
-            console.log('ERROR: Duration too long');
             hmUI.showToast({ text: t('Maximum 24 hours') });
             isProcessingSnooze = false;  // Allow retry
             return;
@@ -146,12 +123,10 @@ Page({
         );
 
         if (alarmId) {
-            console.log(`Snooze alarm created: ID ${alarmId} for ${totalMinutes} minutes`);
             const hoursText = hours > 0 ? `${hours}h ` : '';
             const minutesText = minutes > 0 ? `${minutes}m` : '';
             hmUI.showToast({ text: t(`Snoozed for ${hoursText}${minutesText}`) });
         } else {
-            console.log('ERROR: Failed to create snooze alarm');
             hmUI.showToast({ text: t('Failed to create alarm') });
         }
 
@@ -160,12 +135,11 @@ Page({
     },
 
     onDestroy() {
-        console.log('=== DURATION PICKER DESTROY ===');
         if (timePicker) {
             try {
                 timePicker.destroy();
             } catch (e) {
-                console.log('Error destroying TimePicker:', e);
+                // Ignore errors
             }
         }
         // Reset module-level guard for next use

@@ -23,7 +23,6 @@ class TaskEditScreen extends ListScreen {
       // Handle undefined, null, empty string, or literal "undefined" string
       param = (param && param !== "undefined") ? JSON.parse(param) : {};
     } catch(e) {
-      console.log("TaskEditScreen param parse error:", e);
       param = {};
     }
 
@@ -31,7 +30,6 @@ class TaskEditScreen extends ListScreen {
     if (!param.list_id || !param.task_id) {
       const savedParams = config.get("_editTaskParams");
       if (savedParams) {
-        console.log("TaskEditScreen: Using params from config:", JSON.stringify(savedParams));
         param = savedParams;
         config.set("_editTaskParams", null); // Clear after use
       }
@@ -39,10 +37,8 @@ class TaskEditScreen extends ListScreen {
 
     this.listId = param.list_id;
     this.taskId = param.task_id;
-    console.log("TaskEditScreen: listId=", this.listId, "taskId=", this.taskId);
 
     if (!this.listId || !this.taskId) {
-      console.log("TaskEditScreen: Missing listId or taskId");
       this.task = null;
     } else {
       this.task = tasksProvider.getTaskList(this.listId).getTask(this.taskId);
@@ -61,16 +57,13 @@ class TaskEditScreen extends ListScreen {
       try {
         this.build();
       } catch(e) {
-        console.log("TaskEditScreen build error:", e);
         hmUI.showToast({ text: "Build error: " + (e.message || e) });
       }
     }).catch((e) => {
-      console.log("Sync error:", e);
       hideSpinner();
       try {
         this.build();
       } catch(e2) {
-        console.log("TaskEditScreen build error:", e2);
         hmUI.showToast({ text: "Build error: " + (e2.message || e2) });
       }
     });
@@ -498,18 +491,6 @@ class TaskEditScreen extends ListScreen {
    */
   showAppBasedReminderSettings() {
     // Pass essential task data directly - getTask() creates empty shell without fetching
-    console.log("=== DEBUG CHAIN POINT 1: TaskEditScreen.showAppBasedReminderSettings ===");
-    console.log("this.task object keys:", Object.keys(this.task || {}));
-    console.log("this.task.uid:", this.task?.uid);
-    console.log("this.task.title:", this.task?.title);
-    console.log("this.task.description:", this.task?.description);
-    console.log("this.task.description type:", typeof this.task?.description);
-    console.log("this.task.description length:", this.task?.description?.length);
-
-    const descValue = this.task.description || '';
-    console.log("descValue after || '':", descValue);
-    console.log("descValue length:", descValue.length);
-
     const paramObj = {
       list_id: this.listId,
       task_id: this.taskId,
@@ -517,20 +498,15 @@ class TaskEditScreen extends ListScreen {
       task_data: {
         uid: this.task.uid,
         title: this.task.title,
-        description: descValue,
+        description: this.task.description || '',
         dueDate: this.task.dueDate ? this.task.dueDate.toISOString() : null,
         alarm: this.task.alarm,
         valarm: this.task.valarm
       }
     };
 
-    console.log("paramObj.task_data.description:", paramObj.task_data.description);
-    console.log("Full paramObj:", JSON.stringify(paramObj));
-    console.log("=== END DEBUG CHAIN POINT 1 ===");
-
     // Save params for AppBasedReminderSettings
     config.set("_appReminderSettingsParams", paramObj);
-    console.log("showAppBasedReminderSettings: Saved params with task_data");
 
     // Also restore TaskEditScreen params to config so they're available when back() returns here
     config.set("_editTaskParams", { list_id: this.listId, task_id: this.taskId });
@@ -677,7 +653,6 @@ class TaskEditScreen extends ListScreen {
 
     // Cancel app-based reminder alarms when VALARM is cleared
     if (this.task.uid) {
-      console.log("Cancelling app-based reminder alarms for task (VALARM cleared):", this.task.uid);
       cancelTaskAlarms(this.task.uid);
     }
 
@@ -699,20 +674,12 @@ class TaskEditScreen extends ListScreen {
       inputType: inputType.CHAR,
       text: this.task.title || "",
       onComplete: (keyboardWidget, result) => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
         this.doOverrideTitle(result.data);
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
       }
     });
@@ -723,20 +690,12 @@ class TaskEditScreen extends ListScreen {
       inputType: inputType.CHAR,
       text: this.task.description || "",
       onComplete: (keyboardWidget, result) => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
         this.doOverrideNotes(result.data);
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
       }
     });
@@ -747,20 +706,12 @@ class TaskEditScreen extends ListScreen {
       inputType: inputType.CHAR,
       text: "",
       onComplete: (keyboardWidget, result) => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
         this.doCreateSubtask(result.data);
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.currentKeyboard = null;
       }
     });
@@ -862,7 +813,6 @@ class TaskEditScreen extends ListScreen {
 
     // Cancel app-based reminder alarms before deleting task
     if (this.task.uid) {
-      console.log("Cancelling app-based reminder alarms for task:", this.task.uid);
       cancelTaskAlarms(this.task.uid);
     }
 
@@ -1025,7 +975,6 @@ class TaskEditScreen extends ListScreen {
               log("Error stopping GPS:", e.message || e);
             }
 
-            console.log("GPS acquired:", lat, lon);
             this.saveLocation(lat, lon);
           } else {
             log("Invalid GPS data - waiting for valid coordinates");
@@ -1160,7 +1109,6 @@ Page({
 
       this.screen.init();
     } catch(e) {
-      console.log("TaskEditScreen error:", e);
       hmUI.showToast({ text: "Error: " + (e.message || e) });
     }
   },

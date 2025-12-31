@@ -14,101 +14,67 @@ const {t, config, tasksProvider, messageBuilder} = getApp()._options.globalData
 
 class HomeScreen extends ConfiguredListScreen {
   constructor(params) {
-    console.log("=== HOMESCREEN CONSTRUCTOR START ===");
-    console.log("Raw params received:", params);
-
     super();
-    console.log("super() completed");
 
     this.cachedMode = false;
     this.currentList = null;
     this.taskData = null;
 
-    console.log("Parsing params...");
     try {
       this.params = JSON.parse(params);
-      console.log("Parsed params:", JSON.stringify(this.params));
       if(!this.params) this.params = {};
     } catch(e) {
-      console.log("Error parsing params:", e);
       this.params = {};
     }
-    console.log("=== HOMESCREEN CONSTRUCTOR END ===");
   }
 
   init() {
-    console.log("=== HOMESCREEN INIT START ===");
-    console.log("this.params:", JSON.stringify(this.params));
-
     // Determine which list to load
     let selectedListId = config.get("cur_list_id");
-    console.log("cur_list_id from config:", selectedListId);
 
     // SAFETY: If selectedListId is a local list, verify it exists before trying to load
     if (selectedListId && selectedListId.startsWith("local:")) {
-      console.log("Verifying local list exists...");
       const localLists = config.get("localLists", []);
-      console.log("localLists count:", localLists.length);
       const listExists = localLists.find(l => l.id === selectedListId);
 
       if (!listExists) {
-        console.log("WARNING: cur_list_id points to non-existent local list!");
-        console.log("Clearing cur_list_id and routing to CalDAV instead");
         selectedListId = null;  // Clear it so we route to CalDAV
         config.set("cur_list_id", null);
-      } else {
-        console.log("Local list exists, OK to proceed");
       }
     }
 
     // Check launch settings (only on initial launch)
     const isInitialLaunch = !this.params.returnToListPicker && !this.params.fromListPicker;
-    console.log("isInitialLaunch:", isInitialLaunch);
 
     if (isInitialLaunch) {
       const launchMode = config.get("launchListMode", "last");
-      console.log("launchMode:", launchMode);
 
       if (launchMode === "specific") {
         const launchListId = config.get("launchListId", "");
-        console.log("launchListId:", launchListId);
         if (launchListId) selectedListId = launchListId;
       }
     }
 
-    console.log("Final selectedListId:", selectedListId);
-
     // Route by ID prefix
     if (selectedListId && selectedListId.startsWith("local:")) {
-      console.log("Routing to loadLocalList()");
       this.loadLocalList(selectedListId);
     } else {
-      console.log("Routing to loadCalDAVList()");
       this.loadCalDAVList();
     }
-    console.log("=== HOMESCREEN INIT END ===");
   }
 
   /**
    * Load local list from device storage
    */
   loadLocalList(listId) {
-    console.log("=== LOAD LOCAL LIST START ===");
-    console.log("listId:", listId);
-
     this.cachedMode = true;
     this.taskLists = [];  // CRITICAL: Don't populate with local lists
-    console.log("Set cachedMode = true, taskLists = []");
 
     const localHandler = tasksProvider.getCachedHandler();
-    console.log("Got localHandler");
-
     const listWrapper = localHandler.getTaskList(listId);
-    console.log("listWrapper:", listWrapper ? "Found" : "NULL");
 
     if (!listWrapper) {
       // List not found - Need to fetch CalDAV lists before showing picker
-      console.log("ERROR: Local list not found! Fetching CalDAV lists then opening picker...");
       const hideSpinner = createSpinner();
 
       tasksProvider.init().then(() => {
@@ -120,35 +86,22 @@ class HomeScreen extends ConfiguredListScreen {
         this.openTaskListPicker("browse");
       }).catch((e) => {
         hideSpinner();
-        console.log("ERROR: Failed to fetch CalDAV lists:", e);
         hmUI.showToast({ text: t("List not found") });
       });
       return;
     }
 
-    console.log("List found - ID:", listWrapper.id, "Title:", listWrapper.title);
     this.currentList = listWrapper;
 
     const withComplete = config.get("withComplete", false);
-    const sortMode = config.get("sortMode", "none");
-    console.log("withComplete:", withComplete, "sortMode:", sortMode);
 
     this.currentList.getTasks(withComplete).then((taskData) => {
-      console.log("getTasks() returned");
-      if (!taskData) {
-        console.log("ERROR: taskData is null!");
-        return;
-      }
+      if (!taskData) return;
 
-      console.log("taskData.tasks count:", taskData.tasks.length);
       this.taskData = taskData;
       this.taskData.tasks = this.sortTasks(this.taskData.tasks);
-      console.log("After sort, tasks count:", this.taskData.tasks.length);
-      console.log("Building UI...");
       this.build();
-      console.log("=== LOAD LOCAL LIST END ===");
     }).catch((error) => {
-      console.log("ERROR in getTasks():", error);
       hmUI.showToast({ text: t("Failed to load list") });
     });
   }
@@ -220,7 +173,6 @@ class HomeScreen extends ConfiguredListScreen {
 
       // Get tasks from current list
       if (!this.currentList) {
-        console.log("currentList is null, cannot getTasks");
         return null;
       }
       return this.currentList.getTasks(config.get("withComplete", false), this.params.page);
@@ -313,14 +265,7 @@ class HomeScreen extends ConfiguredListScreen {
    * Open task list picker (as new pane or replace current)
    */
   openTaskListPicker(mode, shouldReplace = false) {
-    console.log("=== OPEN TASK LIST PICKER ===");
-    console.log("mode:", mode);
-    console.log("shouldReplace:", shouldReplace);
-    console.log("this.cachedMode:", this.cachedMode);
-    console.log("this.taskLists.length:", this.taskLists.length);
-
     const isOfflineMode = config.get("forever_offline", false);
-    console.log("forever_offline:", isOfflineMode);
 
     // Helper to navigate to TaskListPickerScreen
     const navigateToListPicker = (lists) => {
@@ -335,14 +280,12 @@ class HomeScreen extends ConfiguredListScreen {
 
     // If in offline mode, skip CalDAV fetch - go directly to list picker
     if (isOfflineMode) {
-      console.log("In offline mode, skipping CalDAV fetch");
       navigateToListPicker([]);
       return;
     }
 
     if (this.cachedMode && this.taskLists.length === 0) {
       // In local mode but not offline - try to fetch CalDAV lists
-      console.log("In local mode, fetching CalDAV lists...");
       const hideSpinner = createSpinner();
 
       tasksProvider.init().then(() => {
@@ -352,7 +295,6 @@ class HomeScreen extends ConfiguredListScreen {
         navigateToListPicker(lists);
       }).catch((e) => {
         hideSpinner();
-        console.log("CalDAV list fetch failed:", e.message);
         // Still navigate with empty CalDAV lists
         navigateToListPicker([]);
       });
@@ -372,7 +314,6 @@ class HomeScreen extends ConfiguredListScreen {
 
     // Save params to config as workaround for API 3.0 push() not passing params
     config.set("_newNoteParams", paramObj);
-    console.log("openNewNoteUI: Saved params to config:", JSON.stringify(paramObj));
 
     push({
       url: `page/amazfit/NewNoteScreen`,
@@ -619,7 +560,6 @@ class HomeScreen extends ConfiguredListScreen {
 
             // Cancel app-based reminder alarms when task is marked completed
             if (completed && data.uid) {
-              console.log("Task marked completed - cancelling app-based reminder alarms:", data.uid);
               cancelTaskAlarms(data.uid);
             }
           } catch(e) {
@@ -864,7 +804,6 @@ class HomeScreen extends ConfiguredListScreen {
 
           // Cancel app-based reminder alarms when subtask is marked completed
           if (completed && subtask.uid) {
-            console.log("Subtask marked completed - cancelling app-based reminder alarms:", subtask.uid);
             cancelTaskAlarms(subtask.uid);
           }
         }
@@ -999,17 +938,13 @@ class HomeScreen extends ConfiguredListScreen {
         this.currentList = validLists.find(l => l.id === selectedListId) || validLists[0];
 
         if (!this.currentList) {
-          console.log("currentList is null in loadCachedTasks");
           this.showOfflineOptions(message);
           return null;
         }
 
         return this.currentList.getTasks(config.get("withComplete", false));
       }).then((taskData) => {
-        if (!taskData) {
-          console.log("No taskData returned");
-          return;
-        }
+        if (!taskData) return;
 
         this.taskData = taskData;
         this.taskData.tasks = this.sortTasks(this.taskData.tasks);
@@ -1024,7 +959,6 @@ class HomeScreen extends ConfiguredListScreen {
       this.cachedMode = true;
       this.currentList = tasksProvider.getCachedTasksList();
       if (!this.currentList) {
-        console.log("Legacy currentList is null");
         this.showOfflineOptions(message);
         return;
       }
@@ -1067,28 +1001,17 @@ class HomeScreen extends ConfiguredListScreen {
 // noinspection JSCheckFunctionSignatures
 Page({
   onInit(params) {
-    console.log("=== PAGE.ONINIT CALLED ===");
-    console.log("params:", JSON.stringify(params));
-
     setStatusBarVisible(true);
     updateStatusBarTitle(t("Tasks"));
 
     setWakeUpRelaunch({ relaunch: true });
     setPageBrightTime({ brightTime: 15000 });
 
-    console.log("About to create HomeScreen instance...");
     try {
       const homeScreen = new HomeScreen(params);
-      console.log("HomeScreen instance created successfully");
-      console.log("About to call init()...");
       homeScreen.init();
-      console.log("init() completed successfully");
     } catch(e) {
-      console.log("!!! EXCEPTION IN PAGE.ONINIT !!!");
-      console.log("Error:", e);
-      console.log("Error message:", e ? e.message : "null");
-      console.log("Error stack:", e ? e.stack : "null");
-      console.log("Error toString:", e ? e.toString() : "null");
+      hmUI.showToast({ text: "Error: " + (e.message || e) });
     }
   },
 

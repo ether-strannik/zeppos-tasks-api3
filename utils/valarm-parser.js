@@ -16,22 +16,9 @@
  *
  * @param {Object} task - CalDAV task object with valarm property
  * @returns {Array} Array of trigger offset objects
- *
- * Example input:
- * task.valarm = [
- *   { trigger: '-PT1H' },
- *   { trigger: '-PT15M' }
- * ]
- *
- * Example output:
- * [
- *   { offset: -60, unit: 'minutes' },
- *   { offset: -15, unit: 'minutes' }
- * ]
  */
 export function parseVALARM(task) {
     if (!task.valarm || task.valarm.length === 0) {
-        console.log('No VALARM found in task');
         return [];
     }
 
@@ -39,22 +26,11 @@ export function parseVALARM(task) {
 
     for (const alarm of task.valarm) {
         if (!alarm.trigger) {
-            console.log('VALARM missing trigger property');
             continue;
         }
 
         // Parse ISO 8601 duration format
         // Format: [-]P[nD]T[nH][nM][nS]
-        // P = Period designator
-        // T = Time designator (separates date from time components)
-        // D = Days, H = Hours, M = Minutes, S = Seconds
-        //
-        // Examples:
-        // -PT15M → 15 minutes before
-        // -PT1H → 1 hour before
-        // -PT1H30M → 1 hour 30 minutes before
-        // -P1DT2H → 1 day 2 hours before
-
         const match = alarm.trigger.match(/^(-)?P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 
         if (match) {
@@ -76,10 +52,6 @@ export function parseVALARM(task) {
                 unit: 'minutes',
                 original: alarm.trigger
             });
-
-            console.log(`Parsed VALARM trigger: ${alarm.trigger} → ${totalMinutes} minutes`);
-        } else {
-            console.log(`Failed to parse VALARM trigger: ${alarm.trigger}`);
         }
     }
 
@@ -91,31 +63,18 @@ export function parseVALARM(task) {
  *
  * @param {Object} task - CalDAV task with due date and valarm
  * @returns {Array} Array of Date objects representing trigger times
- *
- * Example:
- * Task:
- *   due: '2025-01-15T14:00:00Z'
- *   valarm: [{ trigger: '-PT1H' }, { trigger: '-PT15M' }]
- *
- * Returns:
- * [
- *   Date('2025-01-15T13:00:00Z'),  // 1 hour before
- *   Date('2025-01-15T13:45:00Z')   // 15 min before
- * ]
  */
 export function calculateTriggerTimes(task) {
     // CalDAV tasks use task.dueDate, not task.due
     const due = task.dueDate || task.due;
 
     if (!due) {
-        console.log('Task has no due date, cannot calculate trigger times');
         return [];
     }
 
     const dueDate = new Date(due);
 
     if (isNaN(dueDate.getTime())) {
-        console.log('Invalid due date:', task.due);
         return [];
     }
 
@@ -124,8 +83,6 @@ export function calculateTriggerTimes(task) {
 
     // If no valarm triggers found, try to use task.alarm (UI reminder property)
     if (triggers.length === 0 && task.alarm !== null && task.alarm !== undefined) {
-        console.log('No VALARM found, using task.alarm:', JSON.stringify(task.alarm));
-
         // task.alarm can be:
         // - An object { type: 'relative', minutes: X } (minutes before due)
         // - An object { type: 'absolute', date: X } (absolute time)
@@ -137,7 +94,6 @@ export function calculateTriggerTimes(task) {
                 // Relative alarm: minutes before due
                 const minutes = task.alarm.minutes;
                 triggers = [{ offset: -Math.abs(minutes), unit: 'minutes' }];
-                console.log(`Parsed relative alarm: ${minutes} minutes before due`);
             } else if (task.alarm.type === 'absolute' && task.alarm.date) {
                 // Absolute alarm: specific date/time
                 const alarmDate = new Date(task.alarm.date);
@@ -145,13 +101,11 @@ export function calculateTriggerTimes(task) {
                     const offsetMs = alarmDate.getTime() - dueDate.getTime();
                     const offsetMinutes = Math.floor(offsetMs / (60 * 1000));
                     triggers = [{ offset: offsetMinutes, unit: 'minutes' }];
-                    console.log(`Parsed absolute alarm: ${alarmDate.toISOString()}, offset ${offsetMinutes} min`);
                 }
             }
         } else if (typeof task.alarm === 'number') {
             // Legacy format: Offset in minutes (negative = before due)
             triggers = [{ offset: -Math.abs(task.alarm), unit: 'minutes' }];
-            console.log(`Parsed legacy number alarm: ${task.alarm} minutes`);
         } else if (task.alarm instanceof Date || typeof task.alarm === 'string') {
             // Legacy format: Absolute time - calculate offset from due date
             const alarmDate = new Date(task.alarm);
@@ -159,24 +113,18 @@ export function calculateTriggerTimes(task) {
                 const offsetMs = alarmDate.getTime() - dueDate.getTime();
                 const offsetMinutes = Math.floor(offsetMs / (60 * 1000));
                 triggers = [{ offset: offsetMinutes, unit: 'minutes' }];
-                console.log(`Parsed legacy date alarm: ${alarmDate.toISOString()}, offset ${offsetMinutes} min`);
             }
         }
     }
 
     if (triggers.length === 0) {
-        console.log('No valid alarm triggers found');
         return [];
     }
 
     const triggerTimes = triggers.map(trigger => {
         // offset is in minutes, convert to milliseconds
         const offsetMs = trigger.offset * 60 * 1000;
-        const triggerTime = new Date(dueDate.getTime() + offsetMs);
-
-        console.log(`Trigger time calculated: ${triggerTime.toISOString()} (${trigger.offset} min from due)`);
-
-        return triggerTime;
+        return new Date(dueDate.getTime() + offsetMs);
     });
 
     return triggerTimes;
@@ -222,11 +170,6 @@ export function hasValidVALARM(task) {
  *
  * @param {number} offsetMinutes - Offset in minutes (negative = before)
  * @returns {string} Human-readable string
- *
- * Example:
- * formatTriggerOffset(-15) → "15 minutes before"
- * formatTriggerOffset(-60) → "1 hour before"
- * formatTriggerOffset(-1440) → "1 day before"
  */
 export function formatTriggerOffset(offsetMinutes) {
     const absMinutes = Math.abs(offsetMinutes);

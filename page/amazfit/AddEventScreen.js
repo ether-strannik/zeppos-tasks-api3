@@ -112,7 +112,6 @@ class AddEventScreen extends ConfiguredListScreen {
         }
       }
     }).catch((e) => {
-      console.log("Failed to load calendars:", e);
       this.selectedCalendarTitle = t("Error loading");
     });
   }
@@ -161,20 +160,12 @@ class AddEventScreen extends ConfiguredListScreen {
       inputType: inputType.CHAR,
       text: this.title || "",
       onComplete: (keyboardWidget, result) => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.title = result.data || "";
         this.rebuild();
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
       }
     });
   }
@@ -313,20 +304,12 @@ class AddEventScreen extends ConfiguredListScreen {
       inputType: inputType.CHAR,
       text: this.description || "",
       onComplete: (keyboardWidget, result) => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.description = result.data || "";
         this.rebuild();
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
       }
     });
   }

@@ -9,41 +9,28 @@ class TaskListPickerScreen extends ConfiguredListScreen {
   constructor(params) {
     super();
 
-    console.log("=== TASKLISTPICKERSCREEN CONSTRUCTOR ===");
-    console.log("Raw params:", params);
-
     try {
       params = (params && params !== "undefined") ? JSON.parse(params) : {};
     } catch(e) {
-      console.log("Error parsing params:", e);
       params = {};
     }
 
-    console.log("Parsed params:", JSON.stringify(params));
-
     // Fallback: read from config if push() didn't pass params (API 3.0 issue)
     if (!params.lists || !params.mode) {
-      console.log("No lists/mode in params, checking config fallback");
       const savedParams = config.get("_taskListPickerParams");
       if (savedParams) {
-        console.log("Found saved params:", JSON.stringify(savedParams));
         params = savedParams;
         config.set("_taskListPickerParams", null); // Clear after use
       }
     }
 
     this.mode = params.mode;
-    console.log("Mode:", this.mode);
 
     // CalDAV lists from params (passed from HomeScreen)
     this.caldavLists = params.lists || [];
-    console.log("CalDAV lists count:", this.caldavLists.length);
 
     // Local lists from config (always read fresh)
     this.localLists = config.get("localLists", []);
-    console.log("Local lists count:", this.localLists.length);
-    console.log("Local lists:", JSON.stringify(this.localLists));
-    console.log("=== TASKLISTPICKERSCREEN CONSTRUCTOR END ===");
   }
 
   build() {
@@ -110,21 +97,17 @@ class TaskListPickerScreen extends ConfiguredListScreen {
   }
 
   createLocalList() {
-    console.log("=== CREATE LOCAL LIST BUTTON CLICKED ===");
     // Clear any corrupted cur_list_id before navigating
     config.set("cur_list_id", null);
-    console.log("Cleared cur_list_id, now pushing to NewNoteScreen...");
 
     const paramObj = { mode: "create_local_list" };
     // Store params in config as workaround for API 3.0 push() not passing params
     config.set("_newNoteParams", paramObj);
-    console.log("Saved params to config:", JSON.stringify(paramObj));
 
     push({
       url: "page/amazfit/NewNoteScreen",
       param: JSON.stringify(paramObj)
     });
-    console.log("push() completed");
   }
 
   openSettings() {
@@ -167,7 +150,6 @@ Page({
 
       new TaskListPickerScreen(params).build();
     } catch(e) {
-      console.log("TaskListPickerScreen error:", e);
       hmUI.showToast({ text: "Error: " + e.message });
     }
   }

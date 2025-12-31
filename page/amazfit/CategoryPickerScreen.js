@@ -13,7 +13,6 @@ class CategoryPickerScreen extends ConfiguredListScreen {
       // Handle undefined, null, empty string, or literal "undefined" string
       param = (param && param !== "undefined") ? JSON.parse(param) : {};
     } catch(e) {
-      console.log("CategoryPickerScreen param parse error:", e);
       param = {};
     }
 
@@ -21,7 +20,6 @@ class CategoryPickerScreen extends ConfiguredListScreen {
     if (!param.listId || !param.taskId) {
       const savedParams = config.get("_categoryPickerParams");
       if (savedParams) {
-        console.log("CategoryPickerScreen: Using params from config:", JSON.stringify(savedParams));
         param = savedParams;
         config.set("_categoryPickerParams", null); // Clear after use
       }
@@ -30,12 +28,6 @@ class CategoryPickerScreen extends ConfiguredListScreen {
     this.listId = param.listId;
     this.taskId = param.taskId;
     this.currentCategories = param.currentCategories || [];
-
-    console.log("CategoryPickerScreen: listId=", this.listId, "taskId=", this.taskId);
-
-    if (!this.listId || !this.taskId) {
-      console.log("CategoryPickerScreen: Missing listId or taskId");
-    }
 
     // Selected categories (copy of current to allow editing)
     this.selected = [...this.currentCategories];
@@ -129,22 +121,11 @@ class CategoryPickerScreen extends ConfiguredListScreen {
       inputType: inputType.CHAR,
       text: "",
       onComplete: (keyboardWidget, result) => {
-        // Delete keyboard first
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard:", e);
-        }
-
-        // Add the category
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
         this.doAddCategory(result.data);
       },
       onCancel: () => {
-        try {
-          deleteKeyboard();
-        } catch (e) {
-          console.log("Error deleting keyboard on cancel:", e);
-        }
+        try { deleteKeyboard(); } catch (e) { /* ignore */ }
       }
     });
   }
@@ -212,8 +193,6 @@ class CategoryPickerScreen extends ConfiguredListScreen {
   }
 
   saveCategories() {
-    console.log("saveCategories: listId=", this.listId, "taskId=", this.taskId);
-
     if (!this.listId || !this.taskId) {
       hmUI.showToast({ text: "Error: Missing task ID" });
       return;

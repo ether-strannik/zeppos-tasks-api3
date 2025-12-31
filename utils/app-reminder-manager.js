@@ -15,8 +15,6 @@ const { config } = getApp()._options.globalData;
  *
  * Format: task_[uid]_[timestamp]_[title]~[description]|V[0/1]|[C/N]|S[0/1]
  *
- * Example: task_caldav-uuid-123_1736949600_Submit report~Remember to include charts|V1|C|S1
- *
  * @param {string} taskUID - Task UID
  * @param {string} taskTitle - Task title (summary)
  * @param {string} taskDescription - Task description/notes (optional)
@@ -25,18 +23,9 @@ const { config } = getApp()._options.globalData;
  * @returns {string} Formatted param string
  */
 function buildTaskAlarmParam(taskUID, taskTitle, taskDescription, timestamp, settings) {
-    console.log("=== DEBUG CHAIN POINT 5: buildTaskAlarmParam ===");
-    console.log("taskUID:", taskUID);
-    console.log("taskTitle:", taskTitle);
-    console.log("taskDescription:", taskDescription);
-    console.log("taskDescription type:", typeof taskDescription);
-    console.log("taskDescription length:", taskDescription?.length);
-    console.log("timestamp:", timestamp);
-
     const vibration = settings.vibrationEnabled ? 'V1' : 'V0';
     const vibrationType = settings.vibrationType || 'C';
     const sound = settings.soundEnabled ? 'S1' : 'S0';
-
     const settingsStr = `${vibration}|${vibrationType}|${sound}`;
 
     // Sanitize title (remove | ~ and newlines)
@@ -44,25 +33,14 @@ function buildTaskAlarmParam(taskUID, taskTitle, taskDescription, timestamp, set
 
     // Sanitize and truncate description (max 100 chars to avoid param length issues)
     let cleanDesc = '';
-    console.log("Before description processing:");
-    console.log("  taskDescription truthy:", !!taskDescription);
-    console.log("  taskDescription?.trim() truthy:", !!(taskDescription && taskDescription.trim()));
-
     if (taskDescription && taskDescription.trim()) {
         cleanDesc = taskDescription.replace(/[\|~\n\r]/g, ' ').trim();
         if (cleanDesc.length > 100) {
             cleanDesc = cleanDesc.substring(0, 97) + '...';
         }
-        console.log("  cleanDesc after processing:", cleanDesc);
-    } else {
-        console.log("  Description was empty/falsy, cleanDesc stays empty");
     }
 
-    const result = `task_${taskUID}_${timestamp}_${cleanTitle}~${cleanDesc}|${settingsStr}`;
-    console.log("Final param string:", result);
-    console.log("=== END DEBUG CHAIN POINT 5 ===");
-
-    return result;
+    return `task_${taskUID}_${timestamp}_${cleanTitle}~${cleanDesc}|${settingsStr}`;
 }
 
 /**
@@ -70,20 +48,6 @@ function buildTaskAlarmParam(taskUID, taskTitle, taskDescription, timestamp, set
  *
  * @param {string} param - Alarm param from OS
  * @returns {Object|null} Parsed components or null if invalid
- *
- * Example input:
- * "task_caldav-uuid-123_1736949600_Submit report~Remember to include charts|V1|C|S1"
- *
- * Example output:
- * {
- *   taskUID: "caldav-uuid-123",
- *   timestamp: 1736949600,
- *   taskTitle: "Submit report",
- *   taskDescription: "Remember to include charts",
- *   vibrationEnabled: true,
- *   vibrationType: "C",
- *   soundEnabled: true
- * }
  */
 export function parseTaskAlarmParam(param) {
     if (!param || !param.startsWith('task_')) {
@@ -94,7 +58,6 @@ export function parseTaskAlarmParam(param) {
     const match = param.match(/task_(.+?)_(\d+)_(.+?)\|(.+)/);
 
     if (!match) {
-        console.log('Failed to parse task alarm param:', param);
         return null;
     }
 
@@ -130,56 +93,27 @@ export function parseTaskAlarmParam(param) {
  * @param {Object} task - CalDAV task with VALARM
  * @param {Object} settings - App reminder settings
  * @returns {Array} Array of created alarm IDs
- *
- * Example:
- * createTaskAlarms(task, {
- *   enabled: true,
- *   vibrationEnabled: true,
- *   vibrationType: 'C',
- *   soundEnabled: true
- * })
- * → [456, 457]  // Two OS alarm IDs
  */
 export function createTaskAlarms(task, settings) {
-    console.log('=== CREATE TASK ALARMS START ===');
-    console.log('=== DEBUG CHAIN POINT 4: createTaskAlarms ===');
-    console.log('Task UID:', task.uid);
-    console.log('Task title:', task.title);
-    console.log('Task description:', task.description);
-    console.log('Task description type:', typeof task.description);
-    console.log('Task description length:', task.description?.length);
-    console.log('Full task object keys:', Object.keys(task || {}));
-    console.log('Full task JSON:', JSON.stringify(task));
-    console.log('=== END DEBUG CHAIN POINT 4 ===');
-
     const triggerTimes = calculateTriggerTimes(task);
 
     if (triggerTimes.length === 0) {
-        console.log('No VALARM triggers found, cannot create alarms');
         return [];
     }
-
-    console.log(`Creating ${triggerTimes.length} alarm(s)`);
 
     const alarmIds = [];
     const now = new Date();
 
-    triggerTimes.forEach((triggerTime, index) => {
+    for (let i = 0; i < triggerTimes.length; i++) {
+        const triggerTime = triggerTimes[i];
         const timestamp = Math.floor(triggerTime.getTime() / 1000);
 
         // Skip alarms in the past
         if (triggerTime < now) {
-            console.log(`Skipping past trigger time: ${triggerTime.toISOString()}`);
-            return;
+            continue;
         }
 
         const param = buildTaskAlarmParam(task.uid, task.title, task.description || '', timestamp, settings);
-
-        console.log(`Creating alarm ${index + 1}:`, {
-            time: triggerTime.toISOString(),
-            timestamp,
-            param
-        });
 
         try {
             const alarmId = alarmMgr.set({
@@ -188,40 +122,35 @@ export function createTaskAlarms(task, settings) {
                 repeat_type: alarmMgr.REPEAT_ONCE,
                 param: param
             });
-
-            console.log(`✓ Created alarm ID ${alarmId} for ${triggerTime.toISOString()}`);
             alarmIds.push(alarmId);
         } catch (e) {
-            console.log(`✗ Error creating alarm:`, e);
+            console.log('Error creating alarm:', e);
         }
-    });
+    }
 
     // Save alarm IDs and next trigger time to config
     const appReminders = config.get("appReminders", {});
-    if (!appReminders[task.uid]) {
-        appReminders[task.uid] = {};
-    }
+    const existing = appReminders[task.uid] || {};
 
-    // Find the earliest trigger time (next alarm)
+    // Find the earliest future trigger time
     let nextTriggerTime = null;
-    if (triggerTimes.length > 0) {
-        const futureTriggers = triggerTimes.filter(t => t > now);
-        if (futureTriggers.length > 0) {
-            nextTriggerTime = Math.min(...futureTriggers.map(t => t.getTime()));
+    for (let i = 0; i < triggerTimes.length; i++) {
+        if (triggerTimes[i] > now) {
+            nextTriggerTime = triggerTimes[i].getTime();
+            break;
         }
     }
 
-    // Preserve existing settings, update alarmIds and nextTriggerTime
     appReminders[task.uid] = {
-        ...appReminders[task.uid],
+        enabled: existing.enabled,
+        vibrationEnabled: existing.vibrationEnabled,
+        vibrationType: existing.vibrationType,
+        soundEnabled: existing.soundEnabled,
         alarmIds: alarmIds,
         nextTriggerTime: nextTriggerTime
     };
 
     config.set("appReminders", appReminders);
-    console.log(`Saved ${alarmIds.length} alarm IDs to config, nextTriggerTime:`, nextTriggerTime ? new Date(nextTriggerTime).toISOString() : 'none');
-    console.log('=== CREATE TASK ALARMS END ===');
-
     return alarmIds;
 }
 
@@ -231,39 +160,26 @@ export function createTaskAlarms(task, settings) {
  * @param {string} taskUID - Task UID
  */
 export function cancelTaskAlarms(taskUID) {
-    console.log('=== CANCEL TASK ALARMS START ===');
-    console.log('Task UID:', taskUID);
-
     const appReminders = config.get("appReminders", {});
     const taskReminder = appReminders[taskUID];
 
     if (!taskReminder || !taskReminder.alarmIds || taskReminder.alarmIds.length === 0) {
-        console.log('No alarms found for task');
-        console.log('=== CANCEL TASK ALARMS END ===');
         return;
     }
 
-    console.log(`Cancelling ${taskReminder.alarmIds.length} alarm(s)`);
-
-    let cancelledCount = 0;
-    taskReminder.alarmIds.forEach(alarmId => {
+    for (let i = 0; i < taskReminder.alarmIds.length; i++) {
         try {
-            alarmMgr.cancel(alarmId);
-            console.log(`✓ Cancelled alarm ID ${alarmId}`);
-            cancelledCount++;
+            alarmMgr.cancel(taskReminder.alarmIds[i]);
         } catch (e) {
-            console.log(`✗ Error cancelling alarm ${alarmId}:`, e);
+            // Ignore errors - alarm may already be gone
         }
-    });
+    }
 
     // Clear alarm IDs and nextTriggerTime but keep other settings
     taskReminder.alarmIds = [];
     taskReminder.nextTriggerTime = null;
     appReminders[taskUID] = taskReminder;
     config.set("appReminders", appReminders);
-
-    console.log(`Cancelled ${cancelledCount} alarm(s)`);
-    console.log('=== CANCEL TASK ALARMS END ===');
 }
 
 /**
@@ -277,15 +193,8 @@ export function cancelTaskAlarms(taskUID) {
  * @returns {number|null} Created alarm ID or null on error
  */
 export function createSnoozeAlarm(taskUID, taskTitle, taskDescription, durationMinutes, settings) {
-    console.log('=== CREATE SNOOZE ALARM START ===');
-    console.log('Task UID:', taskUID);
-    console.log('Snooze duration:', durationMinutes, 'minutes');
-
     const snoozeTime = Math.floor(Date.now() / 1000) + (durationMinutes * 60);
     const param = buildTaskAlarmParam(taskUID, taskTitle, taskDescription || '', snoozeTime, settings);
-
-    console.log('Snooze time:', new Date(snoozeTime * 1000).toISOString());
-    console.log('Param:', param);
 
     try {
         const alarmId = alarmMgr.set({
@@ -295,23 +204,16 @@ export function createSnoozeAlarm(taskUID, taskTitle, taskDescription, durationM
             param: param
         });
 
-        console.log(`✓ Created snooze alarm ID ${alarmId}`);
-
         // Track snoozed alarm
         const appReminders = config.get("appReminders", {});
         if (appReminders[taskUID] && appReminders[taskUID].alarmIds) {
             appReminders[taskUID].alarmIds.push(alarmId);
             config.set("appReminders", appReminders);
-            console.log('Added snooze alarm to config');
-        } else {
-            console.log('WARNING: Task reminder config not found, snooze alarm not tracked');
         }
 
-        console.log('=== CREATE SNOOZE ALARM END ===');
         return alarmId;
     } catch (e) {
-        console.log('✗ Error creating snooze alarm:', e);
-        console.log('=== CREATE SNOOZE ALARM END ===');
+        console.log('Error creating snooze alarm:', e);
         return null;
     }
 }
@@ -321,15 +223,6 @@ export function createSnoozeAlarm(taskUID, taskTitle, taskDescription, durationM
  *
  * @param {string} taskUID - Task UID
  * @returns {Object|null} Settings object or null if not found
- *
- * Example output:
- * {
- *   enabled: true,
- *   vibrationEnabled: true,
- *   vibrationType: 'C',
- *   soundEnabled: true,
- *   alarmIds: [456, 457]
- * }
  */
 export function getAppReminderSettings(taskUID) {
     const appReminders = config.get("appReminders", {});
@@ -346,7 +239,6 @@ export function setAppReminderSettings(taskUID, settings) {
     const appReminders = config.get("appReminders", {});
     appReminders[taskUID] = settings;
     config.set("appReminders", appReminders);
-    console.log('Saved app reminder settings for task:', taskUID);
 }
 
 /**
@@ -358,7 +250,6 @@ export function removeAppReminderSettings(taskUID) {
     const appReminders = config.get("appReminders", {});
     delete appReminders[taskUID];
     config.set("appReminders", appReminders);
-    console.log('Removed app reminder settings for task:', taskUID);
 }
 
 /**
@@ -420,12 +311,8 @@ export function getActiveAlarmCount(taskUID) {
  * @returns {number} Number of cleaned up alarms
  */
 export function reconcileAppReminders() {
-    console.log('=== RECONCILE APP REMINDERS START ===');
-
     try {
         const activeOSAlarms = alarmMgr.getAllAlarms();
-        console.log('Active OS alarms:', activeOSAlarms);
-
         const appReminders = config.get("appReminders", {});
         let cleanedCount = 0;
 
@@ -437,25 +324,17 @@ export function reconcileAppReminders() {
             const validAlarms = reminder.alarmIds.filter(id => activeOSAlarms.includes(id));
 
             if (validAlarms.length !== reminder.alarmIds.length) {
-                const removedCount = reminder.alarmIds.length - validAlarms.length;
-                console.log(`Task ${taskUID}: Removed ${removedCount} stale alarm(s)`);
+                cleanedCount += reminder.alarmIds.length - validAlarms.length;
                 reminder.alarmIds = validAlarms;
-                cleanedCount += removedCount;
             }
         }
 
         if (cleanedCount > 0) {
             config.set("appReminders", appReminders);
-            console.log(`Cleaned up ${cleanedCount} stale alarm(s)`);
-        } else {
-            console.log('No stale alarms found');
         }
 
-        console.log('=== RECONCILE APP REMINDERS END ===');
         return cleanedCount;
     } catch (e) {
-        console.log('Error reconciling app reminders:', e);
-        console.log('=== RECONCILE APP REMINDERS END ===');
         return 0;
     }
 }

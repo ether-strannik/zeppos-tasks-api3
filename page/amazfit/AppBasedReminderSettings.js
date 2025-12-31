@@ -10,26 +10,19 @@ class AppBasedReminderSettings extends ListScreen {
     constructor(params) {
         super();
 
-        console.log("AppBasedReminderSettings: Raw params:", params);
-
         // Handle undefined params gracefully
         if (params === undefined || params === "undefined" || !params) {
-            console.log("Params undefined, checking config fallback");
             const savedParams = config.get("_appReminderSettingsParams");
             if (savedParams) {
-                console.log("Found saved params in config");
                 params = savedParams;
                 config.set("_appReminderSettingsParams", null); // Clear after use
             } else {
-                console.log("No saved params, using empty object");
                 params = {};
             }
         } else {
             try {
                 params = JSON.parse(params);
-                console.log("Parsed params successfully");
             } catch(e) {
-                console.log("AppBasedReminderSettings param parse error:", e);
                 params = {};
             }
         }
@@ -37,44 +30,22 @@ class AppBasedReminderSettings extends ListScreen {
         this.listId = params.list_id;
         this.taskId = params.task_id;
 
-        // Use task_data passed from TaskEditScreen (getTask() doesn't fetch from server)
-        console.log("=== DEBUG CHAIN POINT 2: AppBasedReminderSettings constructor ===");
-        console.log("params object keys:", Object.keys(params || {}));
-        console.log("params.task_data exists:", !!params.task_data);
-
+        // Use task_data passed from TaskEditScreen
         if (params.task_data) {
-            console.log("Using passed task_data");
             const td = params.task_data;
-            console.log("td (task_data) keys:", Object.keys(td || {}));
-            console.log("td.uid:", td.uid);
-            console.log("td.title:", td.title);
-            console.log("td.description:", td.description);
-            console.log("td.description type:", typeof td.description);
-            console.log("td.description length:", td.description?.length);
-
-            const descFromTd = td.description || '';
-            console.log("descFromTd after || '':", descFromTd);
-            console.log("descFromTd length:", descFromTd.length);
-
             this.task = {
                 uid: td.uid,
                 title: td.title,
-                description: descFromTd,
+                description: td.description || '',
                 dueDate: td.dueDate ? new Date(td.dueDate) : null,
                 alarm: td.alarm,
                 valarm: td.valarm
             };
-            console.log("this.task.description:", this.task.description);
-            console.log("this.task.description length:", this.task.description.length);
-            console.log("Task data: uid=", this.task.uid, "dueDate=", this.task.dueDate, "alarm=", JSON.stringify(this.task.alarm));
         } else {
-            console.log("No task_data in params");
             this.task = null;
         }
-        console.log("=== END DEBUG CHAIN POINT 2 ===");
 
         if (!this.task || !this.task.uid) {
-            console.log("AppBasedReminderSettings: Task data not available");
             this.task = null;
             return;
         }
@@ -88,8 +59,6 @@ class AppBasedReminderSettings extends ListScreen {
             soundEnabled: true,
             alarmIds: []
         };
-
-        console.log("AppBasedReminderSettings: Settings loaded");
 
         this.rows = {};
     }
@@ -214,7 +183,6 @@ class AppBasedReminderSettings extends ListScreen {
     }
 
     cancelAlarms() {
-        console.log("=== CANCEL ALARMS ===");
         cancelTaskAlarms(this.task.uid);
         this.settings.alarmIds = [];
         this.settings.nextTriggerTime = null;
@@ -228,14 +196,12 @@ class AppBasedReminderSettings extends ListScreen {
         const text = this.settings.vibrationEnabled ? t("ON") : t("OFF");
         this.rows.vibration.textView.setProperty(hmUI.prop.TEXT, text);
         this.rows.vibration.iconView.setProperty(hmUI.prop.SRC, `icon_s/cb_${this.settings.vibrationEnabled}.png`);
-        console.log("Toggled vibration:", this.settings.vibrationEnabled);
     }
 
     toggleVibrationType() {
         this.settings.vibrationType = this.settings.vibrationType === 'C' ? 'N' : 'C';
         const typeText = this.settings.vibrationType === 'C' ? t("Continuous") : t("Non-continuous");
         this.rows.vibrationType.textView.setProperty(hmUI.prop.TEXT, t("Type: ") + typeText);
-        console.log("Changed vibration type:", this.settings.vibrationType);
     }
 
     toggleSound() {
@@ -243,7 +209,6 @@ class AppBasedReminderSettings extends ListScreen {
         const text = this.settings.soundEnabled ? t("ON") : t("OFF");
         this.rows.sound.textView.setProperty(hmUI.prop.TEXT, text);
         this.rows.sound.iconView.setProperty(hmUI.prop.SRC, `icon_s/cb_${this.settings.soundEnabled}.png`);
-        console.log("Toggled sound:", this.settings.soundEnabled);
     }
 
     formatSnoozeDuration(minutes) {
@@ -258,26 +223,12 @@ class AppBasedReminderSettings extends ListScreen {
         this.snoozeIndex = (this.snoozeIndex + 1) % snoozeDurations.length;
         const snoozeText = this.formatSnoozeDuration(snoozeDurations[this.snoozeIndex]);
         this.rows.snooze.textView.setProperty(hmUI.prop.TEXT, snoozeText);
-        console.log("Changed snooze duration to:", snoozeDurations[this.snoozeIndex], "min (index:", this.snoozeIndex + ")");
     }
 
     save() {
-        console.log("=== SCHEDULE APP-BASED REMINDER ===");
-        console.log("=== DEBUG CHAIN POINT 3: AppBasedReminderSettings.save() ===");
-        console.log("this.task object keys:", Object.keys(this.task || {}));
-        console.log("this.task.uid:", this.task?.uid);
-        console.log("this.task.title:", this.task?.title);
-        console.log("this.task.description:", this.task?.description);
-        console.log("this.task.description type:", typeof this.task?.description);
-        console.log("this.task.description length:", this.task?.description?.length);
-        console.log("Full this.task:", JSON.stringify(this.task));
-        console.log("Settings:", JSON.stringify(this.settings));
-        console.log("=== END DEBUG CHAIN POINT 3 ===");
-
         // Save snooze duration (global setting)
         if (this.snoozeIndex !== undefined) {
             config.set("snooze_duration_index", this.snoozeIndex);
-            console.log("Saved snooze duration index:", this.snoozeIndex);
         }
 
         // Cancel existing alarms first
@@ -287,16 +238,13 @@ class AppBasedReminderSettings extends ListScreen {
         setAppReminderSettings(this.task.uid, this.settings);
 
         // Create new alarms - this will add alarmIds and nextTriggerTime to config
-        console.log("Calling createTaskAlarms with task:", JSON.stringify(this.task));
         const alarmIds = createTaskAlarms(this.task, this.settings);
 
         if (alarmIds.length === 0) {
-            console.log("Failed to create alarms");
             hmUI.showToast({ text: t("Failed to schedule") });
             return;
         }
 
-        console.log(`Created ${alarmIds.length} alarm(s):`, alarmIds);
         hmUI.showToast({ text: t("Reminder scheduled") });
 
         // Navigate back
@@ -306,7 +254,6 @@ class AppBasedReminderSettings extends ListScreen {
 
 Page({
     onInit(params) {
-        console.log("AppBasedReminderSettings onInit, params:", params);
         setStatusBarVisible(true);
         updateStatusBarTitle("");
         new AppBasedReminderSettings(params).build();

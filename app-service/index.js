@@ -11,7 +11,7 @@ AppService({
 
             // Launch task reminder popup
             launchApp({
-                appId: 1023438,  // Tasks NC app ID
+                appId: 1101421,  // Tasks NC app ID
                 url: 'page/amazfit/TaskReminderPopup',
                 params: params
             });

@@ -397,6 +397,58 @@ class HomeScreen extends ConfiguredListScreen {
   }
 
   /**
+   * Clear all completed tasks from the current list
+   */
+  clearCompletedTasks() {
+    if (!this.taskData || !this.taskData.tasks) {
+      return;
+    }
+
+    // Find all completed tasks (including subtasks)
+    const completedTasks = [];
+
+    const findCompleted = (tasks) => {
+      for (const task of tasks) {
+        if (task.completed) {
+          completedTasks.push(task);
+        }
+        // Check subtasks recursively
+        if (task.subtasks && task.subtasks.length > 0) {
+          findCompleted(task.subtasks);
+        }
+      }
+    };
+
+    findCompleted(this.taskData.tasks);
+
+    if (completedTasks.length === 0) {
+      hmUI.showToast({ text: t("No completed tasks") });
+      return;
+    }
+
+    const hideSpinner = createSpinner();
+
+    // Delete all completed tasks
+    const deletePromises = completedTasks.map(task => {
+      if (typeof task.delete === 'function') {
+        return task.delete().catch(() => {
+          // Ignore individual delete errors
+        });
+      }
+      return Promise.resolve();
+    });
+
+    Promise.all(deletePromises).then(() => {
+      hideSpinner();
+      hmUI.showToast({ text: t("Cleared") + " " + completedTasks.length });
+      this.rebuild();
+    }).catch(() => {
+      hideSpinner();
+      hmUI.showToast({ text: t("Error") });
+    });
+  }
+
+  /**
    * Sort tasks based on user preference
    */
   sortTasks(tasks) {
@@ -529,6 +581,16 @@ class HomeScreen extends ConfiguredListScreen {
       this.text({
         text: t("There's no incomplete tasks in that list")
       })
+    }
+
+    // Show "Clear Completed" button if there are completed tasks
+    const completedCount = this.taskData.tasks.filter(t => t.completed === true).length;
+    if (completedCount > 0) {
+      this.row({
+        text: t("Clear Completed") + ` (${completedCount})`,
+        icon: "icon_s/cleanup.png",
+        callback: () => this.clearCompletedTasks()
+      });
     }
 
     this.taskData.nextPageToken ? this.moreButton() : this.offset();

@@ -9,7 +9,7 @@ import {TasksProvider} from "./src/TasksProvider";
 
 const logger = log.getLogger("app");
 
-const appId = 1023438;
+const appId = 1101421;
 FsTools.appTags = [appId, "app"];
 
 const messageBuilder = new MessageBuilder({ appId });

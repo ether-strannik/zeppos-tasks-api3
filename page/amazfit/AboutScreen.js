@@ -8,7 +8,7 @@ class AboutScreen extends BaseAboutScreen {
   constructor(p) {
     super();
 
-    this.appId = 1023438;
+    this.appId = 1101421;
     this.appName = "Tasks NC";
     this.version = VERSION;
 

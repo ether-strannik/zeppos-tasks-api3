@@ -1,17 +1,18 @@
 {
-  "name": "3.0feature",
-  "version": "1.0.0",
-  "description": "",
+  "name": "tasks-nc",
+  "version": "1.0.1",
+  "description": "Task management application with full Nextcloud/CalDAV synchronization",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "ether-strannik",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@zeppos/device-types": "^3.0.0"
   },
   "dependencies": {
+    "@silver-zepp/vis-log": "^1.5.3",
     "@zeppos/zml": "^0.0.9"
   }
 }
